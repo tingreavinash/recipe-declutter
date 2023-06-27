@@ -146,19 +146,20 @@ function RecipeSummarizer() {
       };            
 
     const RecipeImage = ({ recipe }) => {
-        let lastImage = '';
+        let displayImage = '';
 
         if (recipe?.image) {
             if (Array.isArray(recipe.image)) {
-                lastImage = recipe.image[recipe.image.length - 1];
+                // displayImage = recipe.image[recipe.image.length - 1];
+                displayImage = recipe.image[0];
             } else if (typeof recipe.image === 'object') {
-                lastImage = recipe.image.url || '';
+                displayImage = recipe.image.url || '';
             }
         }
 
         return (
             <>
-                {lastImage && <img src={lastImage} className='square-image' alt="Recipe" />}
+                {displayImage && <img src={displayImage} className='square-image' alt="Recipe" />}
             </>
         );
     };
