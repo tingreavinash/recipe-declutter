@@ -13,7 +13,10 @@
     "popper.js": "^1.16.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-icons": "^4.10.1",
     "react-scripts": "5.0.1",
+    "react-spinners": "^0.13.8",
+    "react-to-print": "^2.14.13",
     "web-vitals": "^2.1.4"
   },
   "scripts": {

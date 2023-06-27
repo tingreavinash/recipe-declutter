@@ -1,6 +1,94 @@
-img{
+@import url('https://fonts.googleapis.com/css2?family=Merriweather&family=Roboto+Slab&family=Libre+Baskerville&family=Courgette&display=swap');
+
+body {
+    font-family: 'Roboto Slab', serif;
+}
+
+img {
     max-height: 400px;
     max-width: 400px;
-    height:auto;
-    width:auto; 
+    height: auto;
+    width: auto;
+}
+
+.square-image {
+    width: 200px;
+    height: 200px;
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+.section-heading {
+    padding-top: 10px;
+}
+
+.recipe-description {
+    color: gray;
+}
+
+.loader {
+    position: absolute;
+    top: calc(50% - 25px) !important;
+    left: calc(50% - 25px) !important;
+    z-index: 5;
+    
+}
+
+h2 {
+    font-family: 'Libre Baskerville', serif;
+    font-weight: bolder;
+}
+
+.card {
+    margin: 1rem;
+    padding: 1rem;
+}
+
+.recipe-time-box {
+    background: rgb(222 255 218 / .69);
+    padding: 5px 20px;
+    border-radius: 15px;
+    max-width: 225px;
+    margin-top: 2px;
+}
+
+
+.recipe-time-box label {
+    color: #2E2E2E;
+    font-size: 17px;
+    width: 100%;
+    float: left;
+    font-weight: bold;
+}
+
+.recipe-details {
+    margin-top: 10px;
+}
+.recipe-time-box span {
+    color:  rgba(80, 136, 74, 0.69);;
+}
+
+ol {
+    list-style: none;
+    counter-reset: item;
+}
+
+ol li {
+    counter-increment: item;
+    margin-bottom: 5px;
+}
+
+ol, ul {
+    padding-left: 1rem;
+}
+
+ol li:before {
+    margin-right: 10px;
+    content: counter(item);
+    background: rgb(247, 63, 124);
+    border-radius: 5px;
+    color: white;
+    width: 1.2em;
+    text-align: center;
+    display: inline-block;
 }
