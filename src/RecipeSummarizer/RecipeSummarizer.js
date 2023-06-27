@@ -20,7 +20,7 @@ function RecipeSummarizer() {
         if (url.trim() !== '') {
             try {
                 setLoading(true);
-                const response = await fetch(`https://proxy.cors.sh/${url}`);
+                const response = await fetch(`https://corsproxy.io/?` + encodeURIComponent(url));
                 if (response.ok) {
                     const data = await response.text();
 
@@ -106,11 +106,44 @@ function RecipeSummarizer() {
         );
     };
 
-    const formatDuration = (duration) => {
-        const regex = /PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/;
-        const [, hours, minutes, seconds] = duration.match(regex) || [];
-        return `${hours ? hours + ' hours ' : ''}${minutes ? minutes + ' minutes ' : ''}${seconds ? seconds + ' seconds' : ''}`;
-    };
+    function convertISO8601Time(time) {
+        const isoRegex = /^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/;
+        const matches = time.match(isoRegex);
+      
+        if (!matches) {
+          return 'Invalid ISO 8601 time format';
+        }
+      
+        const hours = matches[1] ? parseInt(matches[1]) : 0;
+        const minutes = matches[2] ? parseInt(matches[2]) : 0;
+        const seconds = matches[3] ? parseInt(matches[3]) : 0;
+      
+        let result = '';
+      
+        if (hours > 0) {
+          result += `${hours} hour${hours > 1 ? 's' : ''}`;
+        }
+      
+        if (minutes > 0) {
+          if (result) {
+            result += ' ';
+          }
+          
+          if (minutes < 60) {
+            result += `${minutes} minute${minutes > 1 ? 's' : ''}`;
+          } else {
+            const remainingMinutes = minutes % 60;
+            const hoursFromMinutes = Math.floor(minutes / 60);
+            result += `${hoursFromMinutes} hour${hoursFromMinutes > 1 ? 's' : ''} ${remainingMinutes} minute${remainingMinutes > 1 ? 's' : ''}`;
+          }
+        }
+      
+        if (result === '') {
+          result += `${seconds} second${seconds > 1 ? 's' : ''}`;
+        }
+      
+        return result;
+      };            
 
     const RecipeImage = ({ recipe }) => {
         let lastImage = '';
@@ -223,19 +256,19 @@ function RecipeSummarizer() {
                                         <div className='col-sm-4 d-flex justify-content-center'>
                                             <div className='recipe-time-box'>
                                                 <label><RxLapTimer /> Cook Time</label>
-                                                <span>{recipeData?.cookTime && formatDuration(recipeData?.cookTime)}</span>
+                                                <span>{recipeData?.cookTime && convertISO8601Time(recipeData?.cookTime)}</span>
                                             </div>
                                         </div>
                                         <div className='col-sm-4 d-flex justify-content-center'>
                                             <div className='recipe-time-box'>
                                                 <label><RxLapTimer /> Prep Time</label>
-                                                <span>{recipeData?.prepTime && formatDuration(recipeData?.prepTime)}</span>
+                                                <span>{recipeData?.prepTime && convertISO8601Time(recipeData?.prepTime)}</span>
                                             </div>
                                         </div>
                                         <div className='col-sm-4 d-flex justify-content-center'>
                                             <div className='recipe-time-box'>
                                                 <label><RxLapTimer /> Total Time</label>
-                                                <span>{recipeData?.totalTime && formatDuration(recipeData?.totalTime)}</span>
+                                                <span>{recipeData?.totalTime && convertISO8601Time(recipeData?.totalTime)}</span>
                                             </div>
                                         </div>
 
