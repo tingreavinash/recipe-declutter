@@ -1,158 +1,125 @@
-import React, { useState } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import cheerio from 'cheerio';
 import './RecipeSummarizer.css';
 import { RxLapTimer } from "react-icons/rx";
 import { HashLoader } from 'react-spinners';
 import { setCORS } from "google-translate-api-browser";
+import LanguageContext from '../LanguageContext/LanguageContext';
+import Navbar from '../Navbar/Navbar';
 
 function RecipeSummarizer() {
     const [url, setUrl] = useState('');
     const [recipeData, setRecipeData] = useState('');
+    const [displayRecipeData, setDisplayRecipeData] = useState('');
+    
     const [loading, setLoading] = useState(false);
-    const [dataLoad, isDataLoaded] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
+
     const translate = setCORS("https://corsproxy.io/?");
+    const { language, switchLanguage } = useContext(LanguageContext);
 
-    const [textLabels, setTextLabels] = useState({
-        directions: 'Directions',
-        ingredients: 'Ingredients',
-        cookTime: 'Cook Time',
-        prepTime: 'Prep Time',
-        totalTime: 'Total Time',
-        servings: 'servings'
-    });
+    const textLabels = require(`../Assets/${language}.json`); // Load language-specific translations
 
-    const [isDevnagari, toggleTranslate] = useState(false);
-
-    const handleTranslate = () => {
-
-        if (!isDevnagari) {
-            setLoading(true);
-            handleRecipeTranslate();
-        }
-
+    const handleLanguageChange = (event) => {
+        const selectedLanguage = event.target.value;
+        switchLanguage(selectedLanguage);
+        console.log("Selected language: ", selectedLanguage);
     };
 
-    const handleTranslateToEnglish = async () => {
-        if (isDevnagari) {
-            fetchRecipeData();
+    useEffect(() => {
+        if(recipeData){
+            handleRecipeTranslate();
         }
-    }
-
-
-    const handleStaticContentTranslate = async () => {
-        const cacheKey = 'cachedData_translated_static';
-
-        const cacheExpiry = 60 * 60 * 1000 * 24;  // 24 hour (in milliseconds)
-        // Check if the cached data exists and is not expired
-        const cachedData = localStorage.getItem(cacheKey);
-        const cacheTimestamp = localStorage.getItem(`${cacheKey}_timestamp`);
-
-
-        if (cachedData && cacheTimestamp) {
-            const currentTime = new Date().getTime();
-            const isCacheExpired = currentTime - Number(cacheTimestamp) > cacheExpiry;
-            if (!isCacheExpired) {
-                // Use the cached data
-                const parsedData = JSON.parse(cachedData);
-                // Process and display the data as needed
-                // console.log('Data found in cache:', parsedData);
-                setTextLabels(parsedData);
-                isDataLoaded(true);
-
-            }
-        } else {
-
-            console.log('Data not found in cache');
-            const staticLabels = await translateData(textLabels, 'mr');
-            // Store the data in the cache
-            localStorage.setItem(cacheKey, JSON.stringify(staticLabels));
-            localStorage.setItem(`${cacheKey}_timestamp`, new Date().getTime());
-            setTextLabels(staticLabels);
-            isDataLoaded(true);
-        }
-    }
+    }, [language]);
 
     const handleRecipeTranslate = async () => {
+        const cacheKey = `recipe_${language}_${url}_${recipeData['@id']}`;
+        const cacheExpiry = 60 * 60 * 1000 * 24; // 24 hour (in milliseconds)
 
-        const cacheKey = 'cachedData_translated_recipe' + recipeData?.name;
+        const getCachedData = () => {
+            // console.log("Retrieving cache with id: ", cacheKey);
+            const cachedData = localStorage.getItem(cacheKey);
+            const cacheTimestamp = localStorage.getItem(`${cacheKey}_timestamp`);
+            return { cachedData, cacheTimestamp };
+        };
 
-        const cacheExpiry = 60 * 60 * 1000; // 1 hour (in milliseconds)
-        // Check if the cached data exists and is not expired
-        const cachedData = localStorage.getItem(cacheKey);
-        const cacheTimestamp = localStorage.getItem(`${cacheKey}_timestamp`);
-
-
-        if (cachedData && cacheTimestamp) {
+        const isCacheExpired = () => {
             const currentTime = new Date().getTime();
-            const isCacheExpired = currentTime - Number(cacheTimestamp) > cacheExpiry;
-            if (!isCacheExpired) {
-                // Use the cached data
-                const parsedData = JSON.parse(cachedData);
-                // Process and display the data as needed
-                // console.log('Data found in cache:', parsedData);
-                setRecipeData(parsedData);
-                isDataLoaded(true);
-                setLoading(false);
-                toggleTranslate(true);
-                handleStaticContentTranslate();
+            const cacheTimestamp = Number(getCachedData().cacheTimestamp);
+            return currentTime - cacheTimestamp > cacheExpiry;
+        };
 
-
-
-            }
-        } else {
-            console.log('Data not found in cache');
-            const newRecipeData = await translateData(recipeData, 'mr');
-            // Store the data in the cache
-            localStorage.setItem(cacheKey, JSON.stringify(newRecipeData));
+        const setCacheData = (data) => {
+            localStorage.setItem(cacheKey, JSON.stringify(data));
             localStorage.setItem(`${cacheKey}_timestamp`, new Date().getTime());
-            setRecipeData(newRecipeData);
-            setLoading(false);
-            toggleTranslate(true);
-            handleStaticContentTranslate();
+        };
 
-            isDataLoaded(true);
-        }
-    }
+        const handleCacheHit = () => {
+            const { cachedData } = getCachedData();
+            const parsedData = JSON.parse(cachedData);
+            setDisplayRecipeData(parsedData);
+            setLoading(false);
+        };
+
+        const handleCacheMiss = async () => {
+            console.log('Data not found in cache');
+            if (recipeData) {
+                const newRecipeData = await translateData(recipeData, language);
+                setCacheData(newRecipeData);
+                setDisplayRecipeData(newRecipeData);
+                setLoading(false);
+            }
+        };
+
+        const handleCache = async () => {
+            const { cachedData, cacheTimestamp } = getCachedData();
+            if (cachedData && cacheTimestamp && !isCacheExpired()) {
+                handleCacheHit();
+            } else {
+                console.log('Cache data expired');
+                handleCacheMiss();
+            }
+        };
+        setLoading(true);
+        handleCache();
+    };
 
     const translateData = async (data, toLang) => {
-        const translateNestedData = async (data, toLang) => {
-            if (typeof data === 'string' && !data.startsWith("PT")) {
+        const translateNestedData = async (nestedData, toLang) => {
+            if (typeof nestedData === 'string' && !nestedData.startsWith('PT') && !nestedData.startsWith('http') ) {
                 try {
-                    const englishString = htmlDecode(data);
-                    // console.log("Raw string: ", englishString);
+                    const englishString = htmlDecode(nestedData);
+                    // console.log("Input string: ", englishString);
                     const translated = await translateText(englishString, toLang);
-                    // console.log("Translated: ", translated);
+                    // console.log("translated string: ", translated);
+
                     return translated;
                 } catch (error) {
-
-                    return data; // Return the original string if translation fails
+                    return nestedData; // Return the original string if translation fails
                 }
-            } else if (Array.isArray(data)) {
-                const translatedArray = [];
-                for (let i = 0; i < data.length; i++) {
-                    const translatedItem = await translateNestedData(data[i], toLang);
-                    translatedArray.push(translatedItem);
-                }
+            } else if (Array.isArray(nestedData)) {
+                const translatedArray = await Promise.all(
+                    nestedData.map((item) => translateNestedData(item, toLang))
+                );
                 return translatedArray;
-            } else if (typeof data === 'object' && data !== null) {
+            } else if (typeof nestedData === 'object' && nestedData !== null) {
                 const translatedObject = {};
-                for (const key in data) {
-                    if (data.hasOwnProperty(key)) {
-                        const translatedValue = await translateNestedData(data[key], toLang);
+                for (const key in nestedData) {
+                    if (nestedData.hasOwnProperty(key)) {
+                        const translatedValue = await translateNestedData(nestedData[key], toLang);
                         translatedObject[key] = translatedValue;
                     }
                 }
                 return translatedObject;
             }
-            return data;
+            return nestedData;
         };
 
         const translatedData = JSON.parse(JSON.stringify(data));
         const translatedResult = await translateNestedData(translatedData, toLang);
+        setLoading(false);
         return translatedResult;
-
-    }
+    };
 
     const handleUrlChange = (event) => {
         setUrl(event.target.value);
@@ -161,79 +128,61 @@ function RecipeSummarizer() {
     const translateText = async (text, toLang) => {
         try {
             const resultText = await translate(text, { to: toLang });
-            console.log("Translated text:",resultText);
             return resultText.text;
         } catch (error) {
-            // console.error('Error occurred during translation:', error);
-            // console.log("Couldn't translate: ", text);
             return text; // Return the original text if translation fails
         }
     };
 
-    const fetchRecipeData = () => {
+    const clearBrowserCache = () => {
+        console.warn("Clearing local browser cache!");
+        localStorage.clear();
+    }
 
-        const cacheKey = 'cachedData_' + url;
-        const cacheExpiry = 60 * 60 * 1000; // 1 hour (in milliseconds)
 
+    const fetchRecipeData = async () => {
+        switchLanguage('en');
+        const cacheKey = `recipe_${language}_${url}_${recipeData['@id']}`;
+        const cacheExpiry = 60 * 60 * 1000 * 24; // 24 hour (in milliseconds)
         setLoading(true);
+        // console.log("get from cache with id: ", cacheKey);
 
         // Check if the cached data exists and is not expired
         const cachedData = localStorage.getItem(cacheKey);
         const cacheTimestamp = localStorage.getItem(`${cacheKey}_timestamp`);
 
         if (cachedData && cacheTimestamp) {
-
-
             const currentTime = new Date().getTime();
             const isCacheExpired = currentTime - Number(cacheTimestamp) > cacheExpiry;
 
             if (!isCacheExpired) {
-
-
                 // Use the cached data
                 const parsedData = JSON.parse(cachedData);
-                // Process and display the data as needed
-                // console.log('Data found in cache:', parsedData);
-                setRecipeData(parsedData);
-                setTextLabels({
-                    directions: 'Directions',
-                    ingredients: 'Ingredients',
-                    cookTime: 'Cook Time',
-                    prepTime: 'Prep Time',
-                    totalTime: 'Total Time',
-                    servings: 'servings'
-                });
+                setDisplayRecipeData(parsedData);
+                // console.log("Recipe Data: ", parsedData);
                 setLoading(false);
-                isDataLoaded(true);
-                toggleTranslate(false);
             } else {
                 console.log('Cache data expired');
-                fetchHtmlContent();
+                await fetchHtmlContent();
             }
         } else {
             console.log('Data not found in cache');
-            fetchHtmlContent();
+            await fetchHtmlContent();
         }
-    }
-
+    };
 
     const fetchHtmlContent = async () => {
         if (url.trim() !== '') {
             try {
                 setLoading(true);
-
                 const response = await fetch(`https://corsproxy.io/?${url}`);
                 if (response.ok) {
                     const data = await response.text();
-
                     const $ = cheerio.load(data);
                     const schemaElements = $('script[type="application/ld+json"]');
-                    const schemaObjects = [];
-
-                    schemaElements.each((index, element) => {
+                    const schemaObjects = schemaElements.toArray().map((element) => {
                         const schemaText = $(element).html();
-                        const schema = JSON.parse(schemaText);
-                        schemaObjects.push(schema);
+                        return JSON.parse(schemaText);
                     });
 
                     let recipeObject = null;
@@ -244,44 +193,28 @@ function RecipeSummarizer() {
                         }
                     }
 
-                    // console.log("Recipe: {}", recipeObject);
-
                     setRecipeData(recipeObject);
-
-                    const cacheKey = 'cachedData_' + url;
-
-                    // Store the data in the cache
+                    setDisplayRecipeData(recipeObject);
+                    const cacheKey = `recipe_en_${url}_${recipeObject['@id']}`;
+                    // console.log("recipe data: ", recipeObject);
+                    // console.log("saved in cache with id: ", cacheKey);
                     localStorage.setItem(cacheKey, JSON.stringify(recipeObject));
                     localStorage.setItem(`${cacheKey}_timestamp`, new Date().getTime());
 
                     setLoading(false);
-                    isDataLoaded(true);
-                    toggleTranslate(false);
-                    setTextLabels({
-                        directions: 'Directions',
-                        ingredients: 'Ingredients',
-                        cookTime: 'Cook Time',
-                        prepTime: 'Prep Time',
-                        totalTime: 'Total Time',
-                        servings: 'servings'
-                    });
-
                 } else {
                     const errorStatus = response.status;
                     const errorMessage = await response.text();
                     setErrorMsg(`Error: ${errorStatus} - ${errorMessage}`);
                     setLoading(false);
-
                 }
             } catch (error) {
                 setLoading(false);
-
                 console.log('Error fetching HTML content:', error);
             }
-
-
         }
     };
+
 
     const findRecipeObject = (obj) => {
         if (obj && typeof obj === 'object') {
@@ -299,31 +232,27 @@ function RecipeSummarizer() {
         return null;
     };
 
-    const RecipeInstructions = ({ instructions }) => {
-        return (
+    const RecipeInstructions = ({ instructions }) => (
+        <ol>
+            {instructions.map((instruction, index) => (
+                <React.Fragment key={index}>
 
-            <>
-                <ol className="">
 
-                    {instructions.map((instruction, index) => (
-                        <>
-                            {instruction["@type"] === "HowToSection" ? (
-                                <>
-                                    <h3 className='section-heading'>{instruction.name}</h3>
-                                    <RecipeInstructions instructions={instruction.itemListElement} />
-                                </>
-                            ) : (
-                                <li className="" key={index}>{instruction.text}</li>
-                            )}
-                        </>
-                    ))}
-                </ol>
+                    {(instruction.hasOwnProperty('itemListElement') && Array.isArray(instruction.itemListElement))
+                        ? (
+                            <>
+                                <h3 className='section-heading'>{instruction.name}</h3>
+                                <RecipeInstructions instructions={instruction.itemListElement} />
+                            </>
+                        ) : (
+                            <li key={index}>{instruction.text}</li>
+                        )}
+                </React.Fragment>
+            ))}
+        </ol>
+    );
 
-            </>
-        );
-    };
-
-    function convertISO8601Time(time) {
+    const convertISO8601Time = (time) => {
         const isoRegex = /^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/;
         const matches = time?.match(isoRegex);
 
@@ -331,9 +260,9 @@ function RecipeSummarizer() {
             return 'Invalid ISO 8601 time format';
         }
 
-        const hours = matches[1] ? parseInt(matches[1]) : 0;
-        const minutes = matches[2] ? parseInt(matches[2]) : 0;
-        const seconds = matches[3] ? parseInt(matches[3]) : 0;
+        const hours = parseInt(matches[1]) || 0;
+        const minutes = parseInt(matches[2]) || 0;
+        const seconds = parseInt(matches[3]) || 0;
 
         let result = '';
 
@@ -367,18 +296,13 @@ function RecipeSummarizer() {
 
         if (recipe?.image) {
             if (Array.isArray(recipe.image)) {
-                // displayImage = recipe.image[recipe.image.length - 1];
                 displayImage = recipe.image[0];
             } else if (typeof recipe.image === 'object') {
                 displayImage = recipe.image.url || '';
             }
         }
 
-        return (
-            <>
-                {displayImage && <img src={displayImage} className='square-image' alt="Recipe" />}
-            </>
-        );
+        return displayImage && <img src={displayImage} className='square-image' alt="Recipe" />;
     };
 
     const htmlDecode = (str) => {
@@ -388,18 +312,13 @@ function RecipeSummarizer() {
         return withoutNewLines;
     };
 
-    function getDomainName(url) {
-        // Remove the protocol (e.g., "https://") if present
+    const getDomainName = (url) => {
         let domain = url?.replace(/(^\w+:|^)\/\//, '');
-
-        // Remove path and query string, if any
         domain = domain?.split('/')[0];
-
-        // Remove port number, if any
         domain = domain?.split(':')[0];
-
         return domain;
     };
+
 
     return (
         <div>
@@ -409,45 +328,16 @@ function RecipeSummarizer() {
                     loading={loading}
                 />
             </div>
+            <Navbar
+                clearBrowserCache={clearBrowserCache}
+                handleLanguageChange={handleLanguageChange}
+                language={language}
+                handleUrlChange={handleUrlChange}
+                fetchRecipeData={fetchRecipeData}
+                url={url}
+            />
 
-            <nav className="navbar navbar-expand-lg bg-body-tertiary">
-                <div className="container-fluid">
-                    <a className="navbar-brand" href="#">Recipe Declutter</a>
-                    <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                        <span className="navbar-toggler-icon"></span>
-                    </button>
-                    <div className="collapse navbar-collapse" id="navbarNav">
-                        <ul className="navbar-nav">
-                            
-                            <li className="nav-item">
-                                <a className="nav-link" href="#" onClick={handleTranslate}>Translate to Marathi</a>
-                            </li>
-
-                            <li className="nav-item">
-                                <a className="nav-link" href="#" onClick={handleTranslateToEnglish}>Translate to English</a>
-                            </li>
-
-                            <form className="d-flex" onSubmit={fetchRecipeData}>
-                                <input
-                                    placeholder="Paste a recipe URL"
-                                    aria-label="Paste a recipe URL"
-                                    className="form-control me-2"
-                                    type="text"
-                                    id="urlInput"
-                                    value={url}
-                                    onChange={handleUrlChange}
-                                    autoComplete="on"
-                                    autoCorrect="on"
-                                    required
-                                />
-                                <button className="btn btn-outline-success" type="submit">Submit</button>
-                            </form>
-                        </ul>
-                    </div>
-                </div>
-            </nav>
-
-            <div className={`container ${isDevnagari ? 'devnagari-font' : ''}`}>
+            <div className={`container ${language !== 'en' ? 'devnagari-font' : ''}`}>
 
                 {errorMsg !== '' &&
                     <div className="alert alert-warning alert-dismissible fade show" role="alert">
@@ -458,33 +348,35 @@ function RecipeSummarizer() {
 
             </div>
 
-            {dataLoad ? (
-                <div className={`container ${isDevnagari ? 'devnagari-font' : ''}`}>
+            {displayRecipeData ? (
+
+                <div className={`container ${language !== 'en'? 'devnagari-font' : ''}`}>
                     <div className='card'>
                         <div className="row align-items-center">
                             <div className="col-lg-3 text-center">
-                                <RecipeImage recipe={recipeData} />
+                                <RecipeImage recipe={displayRecipeData} />
                             </div>
                             <div className="col-lg-9 text-center" >
                                 {/* Content for the 2nd column */}
                                 <div >
-                                    <h2 className={`${isDevnagari ? 'devnagari-font' : ''}`}>{recipeData?.name}</h2>
-                                    <p className='recipe-description'>{recipeData?.description && htmlDecode(recipeData?.description)}
+                                    <h2 className={`${language !== 'en' ? 'devnagari-font' : ''}`}>{displayRecipeData?.name}</h2>
+                                    <p className='recipe-description'>{displayRecipeData?.description && htmlDecode(displayRecipeData?.description)}
                                         <br />
                                         <small style={{ fontStyle: 'italic' }}>
                                             From:
-                                            <a target="_blank" style={{ textDecoration: 'none', color: 'inherit' }}
-                                                href={typeof recipeData?.mainEntityOfPage === 'string' ? recipeData?.mainEntityOfPage : recipeData?.mainEntityOfPage?.['@id']}
-                                            > {typeof recipeData?.mainEntityOfPage === 'string' ? getDomainName(recipeData?.mainEntityOfPage) : getDomainName(recipeData?.mainEntityOfPage?.['@id'])}
+                                            <a target="_blank" rel="noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}
+                                                href={typeof displayRecipeData?.mainEntityOfPage === 'string' ? displayRecipeData?.mainEntityOfPage : displayRecipeData?.mainEntityOfPage?.['@id']}
+                                            > {typeof displayRecipeData?.mainEntityOfPage === 'string' ? getDomainName(displayRecipeData?.mainEntityOfPage) : getDomainName(displayRecipeData?.mainEntityOfPage?.['@id'])}
                                             </a>
 
                                         </small>
                                     </p>
-                                    <p style={{ fontSize: '20px' }}><span className={`badge text-bg-light ${isDevnagari ? 'devnagari-font' : ''}`}>{
-                                        Array.isArray(recipeData?.recipeYield) ? (
-                                            recipeData.recipeYield[0]
+                                    <p style={{ fontSize: '20px' }}>
+                                        <span className={`badge text-bg-light ${language !== 'en'  ? 'devnagari-font' : ''}`}>{
+                                        Array.isArray(displayRecipeData?.recipeYield) ? (
+                                            displayRecipeData.recipeYield[0]
                                         ) : (
-                                            recipeData?.recipeYield
+                                            displayRecipeData?.recipeYield
                                         )} {textLabels.servings}</span></p>
 
 
@@ -493,20 +385,20 @@ function RecipeSummarizer() {
                                         <div className='col-sm-4 d-flex justify-content-center'>
                                             <div className='recipe-time-box'>
                                                 <label><RxLapTimer /> {textLabels.prepTime}</label>
-                                                <span>{recipeData?.prepTime && convertISO8601Time(recipeData?.prepTime)}</span>
+                                                <span>{displayRecipeData?.prepTime && convertISO8601Time(displayRecipeData?.prepTime)}</span>
                                             </div>
                                         </div>
                                         <div className='col-sm-4 d-flex justify-content-center'>
                                             <div className='recipe-time-box'>
                                                 <label><RxLapTimer /> {textLabels.cookTime}</label>
-                                                <span>{recipeData?.cookTime && convertISO8601Time(recipeData?.cookTime)}</span>
+                                                <span>{displayRecipeData?.cookTime && convertISO8601Time(displayRecipeData?.cookTime)}</span>
                                             </div>
                                         </div>
 
                                         <div className='col-sm-4 d-flex justify-content-center'>
                                             <div className='recipe-time-box'>
                                                 <label><RxLapTimer /> {textLabels.totalTime}</label>
-                                                <span>{recipeData?.totalTime && convertISO8601Time(recipeData?.totalTime)}</span>
+                                                <span>{displayRecipeData?.totalTime && convertISO8601Time(displayRecipeData?.totalTime)}</span>
                                             </div>
                                         </div>
 
@@ -531,20 +423,20 @@ function RecipeSummarizer() {
                         <hr />
                         <div className="row">
                             <div className="col-md-4" style={{ marginTop: '10px' }}>
-                                <h2 className={`${isDevnagari ? 'devnagari-font' : ''}`}>{textLabels.ingredients}</h2>
+                                <h2 className={`${language !== 'en'  ? 'devnagari-font' : ''}`}>{textLabels.ingredients}</h2>
                                 <div className='recipe-ingredients'>
                                     <ul className='list-group'>
-                                        {recipeData?.recipeIngredient?.map((ingredient, index) => (
+                                        {displayRecipeData?.recipeIngredient?.map((ingredient, index) => (
                                             <li key={index} className='list-group-item list-group-item-action list-group-item-light'>{ingredient}</li>
                                         ))}
                                     </ul>
                                 </div>
                             </div>
                             <div className="col-md-8" style={{ marginTop: '10px' }}>
-                                <h2 className={`${isDevnagari ? 'devnagari-font' : ''}`}>{textLabels.directions}</h2>
+                                <h2 className={`${language !== 'en'  ? 'devnagari-font' : ''}`}>{textLabels.directions}</h2>
                                 <div className='recipe-instructions'>
-                                    {recipeData?.recipeInstructions && (
-                                        <RecipeInstructions instructions={recipeData.recipeInstructions} />
+                                    {displayRecipeData?.recipeInstructions && (
+                                        <RecipeInstructions instructions={displayRecipeData.recipeInstructions} />
                                     )}
                                 </div>
                             </div>

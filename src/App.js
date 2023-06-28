@@ -1,10 +1,14 @@
 import logo from './logo.svg';
 import './App.css';
 import RecipeSummarizer from './RecipeSummarizer/RecipeSummarizer';
+import { LanguageProvider } from './LanguageContext/LanguageContext';
 
 function App() {
   return (
-    <RecipeSummarizer />
+    <LanguageProvider>
+      <RecipeSummarizer />
+    </LanguageProvider>
+
   );
 }
 
