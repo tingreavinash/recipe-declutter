@@ -56,7 +56,7 @@ function RecipeSummarizer() {
                 // Use the cached data
                 const parsedData = JSON.parse(cachedData);
                 // Process and display the data as needed
-                console.log('Data found in cache:', parsedData);
+                // console.log('Data found in cache:', parsedData);
                 setTextLabels(parsedData);
                 isDataLoaded(true);
 
@@ -90,7 +90,7 @@ function RecipeSummarizer() {
                 // Use the cached data
                 const parsedData = JSON.parse(cachedData);
                 // Process and display the data as needed
-                console.log('Data found in cache:', parsedData);
+                // console.log('Data found in cache:', parsedData);
                 setRecipeData(parsedData);
                 isDataLoaded(true);
                 setLoading(false);
@@ -120,9 +120,9 @@ function RecipeSummarizer() {
             if (typeof data === 'string' && !data.startsWith("PT")) {
                 try {
                     const englishString = htmlDecode(data);
-                    console.log("Raw string: ", englishString);
+                    // console.log("Raw string: ", englishString);
                     const translated = await translateText(englishString, toLang);
-                    console.log("Translated: ", translated);
+                    // console.log("Translated: ", translated);
                     return translated;
                 } catch (error) {
 
@@ -160,8 +160,9 @@ function RecipeSummarizer() {
 
     const translateText = async (text, toLang) => {
         try {
-            const translatedText = await translate(text, { to: toLang });
-            return translatedText.text;
+            const resultText = await translate(text, { to: toLang });
+            console.log("Translated text:",resultText);
+            return resultText.text;
         } catch (error) {
             // console.error('Error occurred during translation:', error);
             // console.log("Couldn't translate: ", text);
@@ -192,7 +193,7 @@ function RecipeSummarizer() {
                 // Use the cached data
                 const parsedData = JSON.parse(cachedData);
                 // Process and display the data as needed
-                console.log('Data found in cache:', parsedData);
+                // console.log('Data found in cache:', parsedData);
                 setRecipeData(parsedData);
                 setTextLabels({
                     directions: 'Directions',
@@ -243,7 +244,7 @@ function RecipeSummarizer() {
                         }
                     }
 
-                    console.log("Recipe: {}", recipeObject);
+                    // console.log("Recipe: {}", recipeObject);
 
                     setRecipeData(recipeObject);
 
@@ -411,15 +412,13 @@ function RecipeSummarizer() {
 
             <nav className="navbar navbar-expand-lg bg-body-tertiary">
                 <div className="container-fluid">
-                    <a className="navbar-brand" href="#">Navbar</a>
+                    <a className="navbar-brand" href="#">Recipe Declutter</a>
                     <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                         <span className="navbar-toggler-icon"></span>
                     </button>
                     <div className="collapse navbar-collapse" id="navbarNav">
                         <ul className="navbar-nav">
-                            <li className="nav-item">
-                                <a className="nav-link active" aria-current="page" href="#">Home</a>
-                            </li>
+                            
                             <li className="nav-item">
                                 <a className="nav-link" href="#" onClick={handleTranslate}>Translate to Marathi</a>
                             </li>
