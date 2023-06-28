@@ -1,4 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Merriweather&family=Roboto+Slab&family=Libre+Baskerville&family=Courgette&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Anek+Devanagari&family=Merriweather&family=Roboto+Slab&family=Libre+Baskerville&family=Courgette&display=swap');
+
+.devnagari-font {
+    font-family: 'Anek Devanagari', sans-serif !important;
+}
 
 body {
     font-family: 'Roboto Slab', serif;
@@ -27,7 +31,7 @@ img {
 }
 
 .loader {
-    position: absolute;
+    position: fixed;
     top: calc(50% - 25px) !important;
     left: calc(50% - 25px) !important;
     z-index: 5;
@@ -37,6 +41,7 @@ img {
 h2 {
     font-family: 'Libre Baskerville', serif;
     font-weight: bolder;
+    padding-top: 10px;
 }
 
 .card {
