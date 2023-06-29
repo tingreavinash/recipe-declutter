@@ -1,9 +1,8 @@
 {
-    "directions": "दिशा-निर्देश",
-    "ingredients": "साहित्य",
-    "cookTime": "स्वयंपाकाची वेळ",
-    "prepTime": "तयारीची वेळ",
-    "totalTime": "पूर्ण वेळ",
-    "servings": "सर्विंग"
-  }
-  
+  "directions": "दिशा-निर्देश",
+  "ingredients": "साहित्य",
+  "cookTime": "स्वयंपाकाची वेळ",
+  "prepTime": "तयारीची वेळ",
+  "totalTime": "पूर्ण वेळ",
+  "servings": "सर्विंग"
+}
