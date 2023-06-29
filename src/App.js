@@ -16,7 +16,7 @@ function App() {
         <div className="main-component">
           <Routes>
             <Route path="/" element={<RecipeSummarizer />} />
-            <Route path="/about" element={<About />} />
+            {/* <Route path="/about" element={<About />} /> */}
             <Route path="/homepage" element={<RecipeSummarizer />} />
             <Route path="/collection" element={<RecipeCollection />} />
           </Routes>

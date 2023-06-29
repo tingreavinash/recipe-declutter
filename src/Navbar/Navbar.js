@@ -32,11 +32,11 @@ const Navbar = () => {
                 Recipe Collection
               </Link>
             </li>
-            <li className="nav-item">
+            {/* <li className="nav-item">
               <Link to="/about" className="nav-link">
                 About
               </Link>
-            </li>
+            </li> */}
           </ul>
         </div>
       </div>

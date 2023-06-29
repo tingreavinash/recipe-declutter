@@ -1,7 +1,7 @@
 {
   "name": "recipe-summarizer",
   "version": "0.1.0",
-  "homepage": "https://tingreavinash.github.io/recipe-declutter-dashboard",
+  "homepage": "/recipe-declutter-dashboard/#",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^5.16.5",
