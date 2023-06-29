@@ -6,6 +6,8 @@ import { HashLoader } from "react-spinners";
 import { setCORS } from "google-translate-api-browser";
 import LanguageContext from "../LanguageContext/LanguageContext";
 import Navbar from "../Navbar/Navbar";
+import { BsPlusSquareFill } from "react-icons/bs";
+import FirebaseUtils from "../FirebaseUtil/FirebaseUtils";
 
 function RecipeSummarizer() {
   const [url, setUrl] = useState("");
@@ -23,19 +25,31 @@ function RecipeSummarizer() {
   const textLabels = require(`../Assets/${language}.json`); // Load language-specific translations
 
   const handleLanguageChange = (event) => {
-    const selectedLanguage = event.target.value;
-    switchLanguage(selectedLanguage);
-    console.log("Selected language: ", selectedLanguage);
+    if (errorMsg.length == 0) {
+      const selectedLanguage = event.target.value;
+      switchLanguage(selectedLanguage);
+      console.log("Selected language: ", selectedLanguage);
+    }
+  };
+
+  const [firebaseError, setFirebaseError] = useState("");
+
+  const handleAddRecipe = (event) => {
+    event.preventDefault();
+    try {
+      FirebaseUtils.addRecipeToCollection(displayRecipeData);
+    } catch (error) {
+      setFirebaseError(error);
+    }
   };
 
   const handleFormSubmit = (event) => {
     event.preventDefault();
     setSubmittedUrl(url);
-    console.log("Updated URL to: ", submittedUrl);
   };
 
   useEffect(() => {
-    if (recipeData) {
+    if (displayRecipeData) {
       handleRecipeTranslate();
     }
   }, [language]);
@@ -64,7 +78,7 @@ function RecipeSummarizer() {
     };
 
     const setCacheData = (data) => {
-      console.log("translated data saved with cache id: ", cacheKey);
+      //   console.log("translated data saved with cache id: ", cacheKey);
       localStorage.setItem(cacheKey, JSON.stringify(data));
       localStorage.setItem(`${cacheKey}_timestamp`, new Date().getTime());
     };
@@ -73,17 +87,21 @@ function RecipeSummarizer() {
       const { cachedData } = getCachedData();
       const parsedData = JSON.parse(cachedData);
       setDisplayRecipeData(parsedData);
+      setErrorMsg("");
+
       setLoading(false);
     };
 
     const handleCacheMiss = async () => {
       console.log("Data not found in cache");
+
       if (recipeData) {
         const newRecipeData = await translateData(recipeData, language);
         setCacheData(newRecipeData);
         setDisplayRecipeData(newRecipeData);
-        setLoading(false);
+        setErrorMsg("");
       }
+      setLoading(false);
     };
 
     const handleCache = async () => {
@@ -192,13 +210,15 @@ function RecipeSummarizer() {
   const clearBrowserCache = () => {
     console.warn("Clearing local browser cache!");
     localStorage.clear();
+    setRecipeData("");
+    setDisplayRecipeData("");
   };
 
   const fetchRecipeData = async () => {
     const cacheKey = `recipe_en_${submittedUrl}`;
     const cacheExpiry = 60 * 60 * 1000 * 24; // 24 hour (in milliseconds)
     setLoading(true);
-    console.log("get from cache with id: ", cacheKey);
+    // console.log("get from cache with id: ", cacheKey);
 
     // Check if the cached data exists and is not expired
     const cachedData = localStorage.getItem(cacheKey);
@@ -212,9 +232,11 @@ function RecipeSummarizer() {
         // Use the cached data
         const parsedData = JSON.parse(cachedData);
         setDisplayRecipeData(parsedData);
+        setErrorMsg("");
+
         // console.log("Recipe Data: ", parsedData);
         setLoading(false);
-        switchLanguage("en")
+        switchLanguage("en");
       } else {
         console.log("Cache data expired");
         await fetchHtmlContent();
@@ -254,14 +276,14 @@ function RecipeSummarizer() {
           if (cleanedRecipeData) {
             setRecipeData(cleanedRecipeData);
             setDisplayRecipeData(cleanedRecipeData);
+            setErrorMsg("");
 
             const cacheKey = `recipe_en_${submittedUrl}`;
-            console.log("recipe data: ", cleanedRecipeData);
 
             localStorage.setItem(cacheKey, JSON.stringify(cleanedRecipeData));
             localStorage.setItem(`${cacheKey}_timestamp`, new Date().getTime());
 
-            console.log("saved in cache with id: ", cacheKey);
+            // console.log("saved in cache with id: ", cacheKey);
             switchLanguage("en");
           }
 
@@ -269,12 +291,14 @@ function RecipeSummarizer() {
         } else {
           const errorStatus = response.status;
           const errorMessage = await response.text();
-          setErrorMsg(`Error: ${errorStatus} - ${errorMessage}`);
+          setErrorMsg(`${errorStatus} - ${errorMessage}`);
+          console.log("Error: ", errorMessage);
           setLoading(false);
         }
       } catch (error) {
         setLoading(false);
-        console.log("Error fetching HTML content:", error);
+
+        setErrorMsg(`${error}`);
       }
     }
   };
@@ -402,9 +426,9 @@ function RecipeSummarizer() {
       />
 
       <div className={`container ${language !== "en" ? "devnagari-font" : ""}`}>
-        {errorMsg !== "" && (
+        {errorMsg.length > 0 && (
           <div
-            className="alert alert-warning alert-dismissible fade show"
+            className="alert alert-danger alert-dismissible fade show"
             role="alert"
           >
             <strong>Error!</strong> {errorMsg}
@@ -412,7 +436,22 @@ function RecipeSummarizer() {
               type="button"
               className="btn-close"
               data-bs-dismiss="alert"
-              onClick={setErrorMsg("")}
+              onClick={() => setErrorMsg("")}
+              aria-label="Close"
+            ></button>
+          </div>
+        )}
+
+        {firebaseError.length > 0 && (
+          <div
+            className="alert alert-danger alert-dismissible fade show"
+            role="firebaseAlert"
+          >
+            <strong>Error!</strong> {firebaseError}
+            <button
+              type="button"
+              className="btn-close"
+              data-bs-dismiss="firebaseAlert"
               aria-label="Close"
             ></button>
           </div>
@@ -423,6 +462,11 @@ function RecipeSummarizer() {
         <div
           className={`container ${language !== "en" ? "devnagari-font" : ""}`}
         >
+          <div className="floating-button-container">
+            <h2>
+              <BsPlusSquareFill onClick={handleAddRecipe} />
+            </h2>
+          </div>
           <div className="card">
             <div className="row align-items-center">
               <div className="col-lg-3 text-center">
@@ -568,7 +612,7 @@ function RecipeSummarizer() {
         <></>
       )}
 
-      {errorMsg && (
+      {errorMsg.length > 0 && (
         <div
           role="alert"
           aria-live="assertive"

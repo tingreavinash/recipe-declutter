@@ -1,5 +1,6 @@
 import React from "react";
 import "./Navbar.css";
+import { FaArrowRight } from "react-icons/fa6";
 
 const Navbar = ({
   handleLanguageChange,
@@ -32,7 +33,7 @@ const Navbar = ({
               <li className="nav-item">
                 <button
                   type="button"
-                  className="btn btn-secondary btn-sm"
+                  className="btn btn-warning btn-sm"
                   onClick={clearBrowserCache}
                   disabled={loading}
                 >
@@ -77,11 +78,11 @@ const Navbar = ({
                 required
               />
               <button
-                className="btn btn-outline-secondary"
+                className="btn btn-outline-success"
                 type="submit"
                 disabled={loading}
               >
-                Submit
+                <FaArrowRight />
               </button>
             </form>
           </div>

@@ -48,12 +48,20 @@ h2 {
   padding: 5px;
 }
 
+.alert {
+  position: fixed;
+  top: calc(50%) !important;
+  left: calc(50%) !important;
+  transform: translate(-50%, -50%);
+  z-index: 5;
+}
+
 @media only screen and (max-width: 1000px) {
 
   .navbar{
     -webkit-backdrop-filter: blur(4px);
     backdrop-filter: blur(4px);
-    background-color: var(--accent-color-tr)!important;
+    background-color:  #8be3c2cc !important;
     border-radius: 0.5rem;
     box-shadow: 1px 5px 5px 0 rgba(108,135,135,.2);
     margin: 5px;
@@ -111,4 +119,13 @@ ol li:before {
   width: 1.2em;
   text-align: center;
   display: inline-block;
+}
+
+.floating-button-container {
+  position: fixed;
+  top: 50%;
+  left: 10px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
 }
