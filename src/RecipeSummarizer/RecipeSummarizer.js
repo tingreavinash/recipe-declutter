@@ -27,9 +27,10 @@ function RecipeSummarizer({ dbRecipe }) {
 
   useEffect(() => {
     if (dbRecipe) {
-      setRecipeData(dbRecipe);
-      setDisplayRecipeData(dbRecipe);
-      setSubmittedUrl(dbRecipe['@id']);
+      console.log("Db recipe: ", dbRecipe);
+      setRecipeData(dbRecipe?.data?.recipeObject);
+      setDisplayRecipeData(dbRecipe?.data?.recipeObject);
+      setSubmittedUrl(dbRecipe?.data?.recipeObject["@id"]);
     }
   }, [dbRecipe]);
 
@@ -61,6 +62,23 @@ function RecipeSummarizer({ dbRecipe }) {
       setFirebaseOperationProcessing(false);
     }
   };
+
+  const handleDeleteRecipe = (event) => {
+    event.preventDefault();
+    setFirebaseOperationProcessing(true);
+    try {
+      FirebaseUtils.deleteRecipeFromCollection(dbRecipe).then(() => {
+        setFirebaseOperationProcessing(false);
+        setFirebaseStatus({
+          status: "success",
+          message: "Recipe removed from collection!",
+        });
+      });
+    } catch (error) {
+      setFirebaseStatus({ status: "fail", message: error });
+      setFirebaseOperationProcessing(false);
+    }
+  }
 
   const handleFormSubmit = (event) => {
     event.preventDefault();
@@ -97,7 +115,7 @@ function RecipeSummarizer({ dbRecipe }) {
     };
 
     const setCacheData = (data) => {
-        // console.log("translated data saved with cache id: ", cacheKey);
+      // console.log("translated data saved with cache id: ", cacheKey);
       localStorage.setItem(cacheKey, JSON.stringify(data));
       localStorage.setItem(`${cacheKey}_timestamp`, new Date().getTime());
     };
@@ -114,12 +132,12 @@ function RecipeSummarizer({ dbRecipe }) {
     const handleCacheMiss = async () => {
       console.log("Data not found in cache");
 
-      if(language === 'en'){
+      if (language === "en") {
         // console.log("Language is english");
         setCacheData(recipeData);
         setDisplayRecipeData(recipeData);
         setErrorMsg("");
-      } else if( recipeData) {
+      } else if (recipeData) {
         // console.log("Language is not english and recipeData is present");
 
         const newRecipeData = await translateData(recipeData, language);
@@ -467,7 +485,7 @@ function RecipeSummarizer({ dbRecipe }) {
                 aria-expanded="true"
                 aria-controls="collapseOne"
               >
-                Search Options
+                Options
               </button>
             </h2>
             <div
@@ -476,35 +494,71 @@ function RecipeSummarizer({ dbRecipe }) {
               data-bs-parent="#accordionExample"
             >
               <div className="accordion-body">
-                {!dbRecipe && (
-                  <button
-                    type="button"
-                    className="btn btn-warning btn-sm"
-                    onClick={clearBrowserCache}
-                    disabled={loading}
-                  >
-                    Clear Cache
-                  </button>
-                )}
+                <div className="row options-row justify-content-center">
+                  {!dbRecipe && displayRecipeData && (
+                    <div className="col-auto">
+                      <button
+                        type="button"
+                        className="btn btn-success"
+                        onClick={handleAddRecipe}
+                        disabled={firebaseOperationProcessing}
+                      >
+                        Add to Favorite
+                      </button>
+                    </div>
+                  )}
 
-                <div className="form-floating">
-                  <select
-                    value={language}
-                    onChange={handleLanguageChange}
-                    className="form-select form-control-sm"
-                    id="floatingSelect"
-                    aria-label="Select language"
-                    disabled={loading}
-                  >
-                    {/* <option selected>Select a language</option> */}
-                    <option value="en">English</option>
-                    <option value="mr">Marathi</option>
-                    <option value="hi">Hindi</option>
-                    <option value="kn">Kannada</option>
-                    <option value="te">Telugu</option>
-                    <option value="ta">Tamil</option>
-                  </select>
-                  <label htmlFor="floatingSelect">Language</label>
+                  {dbRecipe && displayRecipeData && (
+                    <div className="col-auto">
+                      <button
+                        type="button"
+                        className="btn btn-danger"
+                        onClick={handleDeleteRecipe}
+                        disabled={firebaseOperationProcessing}
+                      >
+                        Remove from Favorite
+                      </button>
+                    </div>
+                  )}
+
+                  {!dbRecipe && (
+                    <div className="col-auto">
+                      <button
+                        type="button"
+                        className="btn btn-warning"
+                        onClick={clearBrowserCache}
+                        disabled={loading}
+                      >
+                        Clear Cache
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="col-auto">
+                    <label
+                      className="visually-hidden"
+                      htmlFor="autoSizingSelect"
+                    >
+                      Preference
+                    </label>
+                    <select
+                      className="form-select"
+                      id="autoSizingSelect"
+                      value={language}
+                      onChange={handleLanguageChange}
+                      disabled={loading}
+                    >
+                      {/* <option selected>Select a language</option> */}
+                      <option value="en" selected>
+                        English
+                      </option>
+                      <option value="mr">Marathi</option>
+                      <option value="hi">Hindi</option>
+                      <option value="kn">Kannada</option>
+                      <option value="te">Telugu</option>
+                      <option value="ta">Tamil</option>
+                    </select>
+                  </div>
                 </div>
 
                 {!dbRecipe && (
@@ -578,19 +632,6 @@ function RecipeSummarizer({ dbRecipe }) {
         <div
           className={`container ${language !== "en" ? "devnagari-font" : ""}`}
         >
-          {!dbRecipe && (
-            <div className="floating-button-container">
-              <button
-                type="button"
-                className="btn btn-dark"
-                onClick={handleAddRecipe}
-                disabled={firebaseOperationProcessing}
-              >
-                <BsPlusSquareFill />
-              </button>
-            </div>
-          )}
-
           <div className="card">
             <div className="row align-items-center">
               <div className="col-lg-3 text-center">
@@ -600,7 +641,9 @@ function RecipeSummarizer({ dbRecipe }) {
                 {/* Content for the 2nd column */}
                 <div>
                   <h2
-                    className={`${language !== "en" ? "devnagari-font" : ""}`}
+                    className={`'recipe-header' ${
+                      language !== "en" ? "devnagari-font" : ""
+                    }`}
                   >
                     {displayRecipeData?.name}
                   </h2>
@@ -685,7 +728,11 @@ function RecipeSummarizer({ dbRecipe }) {
             <hr />
             <div className="row">
               <div className="col-md-4" style={{ marginTop: "10px" }}>
-                <h2 className={`${language !== "en" ? "devnagari-font" : ""}`}>
+                <h2
+                  className={`'recipe-header' ${
+                    language !== "en" ? "devnagari-font" : ""
+                  }`}
+                >
                   {textLabels.ingredients}
                 </h2>
                 <div className="recipe-ingredients">
@@ -704,7 +751,11 @@ function RecipeSummarizer({ dbRecipe }) {
                 </div>
               </div>
               <div className="col-md-8" style={{ marginTop: "10px" }}>
-                <h2 className={`${language !== "en" ? "devnagari-font" : ""}`}>
+                <h2
+                  className={`'recipe-header' ${
+                    language !== "en" ? "devnagari-font" : ""
+                  }`}
+                >
                   {textLabels.directions}
                 </h2>
                 <div className="recipe-instructions">

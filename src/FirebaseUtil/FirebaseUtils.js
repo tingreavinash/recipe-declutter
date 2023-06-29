@@ -1,15 +1,26 @@
 import { firestore } from "./FirebaseConfig";
-import { doc, setDoc, getDocs, addDoc, collection } from "@firebase/firestore";
+import { doc, setDoc, getDocs, deleteDoc, addDoc, collection } from "@firebase/firestore";
 
 class FirebaseUtils {
-  static replaceNonAlphanumeric(url) {
-    return url != null ? url.replace(/[^a-zA-Z0-9]/g, "_") : Date.now();
+  static generateDocId(recipeData) {
+
+    let sanitizedId = null;
+    if(recipeData["@id"]){
+      sanitizedId = recipeData["@id"].replace(/[^a-zA-Z0-9]/g, "_");
+    } else if(recipeData?.datePublished){
+      sanitizedId = recipeData?.datePublished.replace(/[^a-zA-Z0-9]/g, "_");
+    } else if(recipeData?.url){
+      sanitizedId = recipeData?.url.replace(/[^a-zA-Z0-9]/g, "_");
+    } else {
+      sanitizedId = recipeData?.name.replace(/[^a-zA-Z0-9]/g, "_");
+    }
+    return sanitizedId;
   }
 
   static async addRecipeToCollection(recipeData) {
     const favRecipesRef = collection(firestore, "favRecipes"); // Firebase creates this automatically
     try {
-      const recipeId = this.replaceNonAlphanumeric(recipeData?.["@id"]);
+      const recipeId = this.generateDocId(recipeData);
       console.log("recipeid: ", recipeId);
       console.log("recipeData: ", recipeData);
       await setDoc(doc(favRecipesRef, recipeId), {
@@ -17,6 +28,18 @@ class FirebaseUtils {
         recipeObject: recipeData,
       });
       console.log("Recipe added to collection.");
+    } catch (err) {
+      console.log(err);
+      throw err;
+    }
+  }
+
+  static async deleteRecipeFromCollection(dbRecipe) {
+    const favRecipesRef = collection(firestore, "favRecipes"); // Firebase creates this automatically
+    try {
+      console.log("recipeid: ", dbRecipe?.id);
+      await deleteDoc(doc(favRecipesRef, dbRecipe?.id));
+      console.log("Recipe removed from collection.");
     } catch (err) {
       console.log(err);
       throw err;
@@ -34,7 +57,7 @@ class FirebaseUtils {
         // doc.data() is never undefined for query doc snapshots
         result.push({id: recipe.id, data: recipe.data()});
       });
-      console.log("Fetched all recipes: ", result);
+      console.log("Fetched all recipes.");
 
       return result;
     } catch (err) {

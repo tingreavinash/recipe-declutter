@@ -30,6 +30,10 @@ img {
   color: gray;
 }
 
+.options-row{
+  padding: 5px;
+}
+
 .loader {
   position: fixed;
   top: calc(50% - 25px) !important;
@@ -37,7 +41,7 @@ img {
   z-index: 5;
 }
 
-h2 {
+h2 > .recipe-header {
   font-family: "Libre Baskerville", serif;
   font-weight: bolder;
   padding-top: 10px;
