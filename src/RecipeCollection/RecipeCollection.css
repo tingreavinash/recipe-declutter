@@ -1,0 +1,6 @@
+.loader {
+    position: fixed;
+    top: calc(50% - 25px) !important;
+    left: calc(50% - 25px) !important;
+    z-index: 5;
+  }

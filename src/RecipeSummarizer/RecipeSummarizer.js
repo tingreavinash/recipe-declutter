@@ -8,8 +8,9 @@ import LanguageContext from "../LanguageContext/LanguageContext";
 import Navbar from "../Navbar/Navbar";
 import { BsPlusSquareFill } from "react-icons/bs";
 import FirebaseUtils from "../FirebaseUtil/FirebaseUtils";
+import { FaArrowRight } from "react-icons/fa6";
 
-function RecipeSummarizer() {
+function RecipeSummarizer({ dbRecipe }) {
   const [url, setUrl] = useState("");
   const [submittedUrl, setSubmittedUrl] = useState("");
 
@@ -24,22 +25,40 @@ function RecipeSummarizer() {
 
   const textLabels = require(`../Assets/${language}.json`); // Load language-specific translations
 
+  useEffect(() => {
+    if (dbRecipe) {
+      setRecipeData(dbRecipe);
+      setDisplayRecipeData(dbRecipe);
+      setSubmittedUrl(dbRecipe['@id']);
+    }
+  }, [dbRecipe]);
+
   const handleLanguageChange = (event) => {
-    if (errorMsg.length == 0) {
+    if (errorMsg.length === 0) {
       const selectedLanguage = event.target.value;
       switchLanguage(selectedLanguage);
       console.log("Selected language: ", selectedLanguage);
     }
   };
 
-  const [firebaseError, setFirebaseError] = useState("");
+  const [firebaseStatus, setFirebaseStatus] = useState(null);
+  const [firebaseOperationProcessing, setFirebaseOperationProcessing] =
+    useState(false);
 
   const handleAddRecipe = (event) => {
     event.preventDefault();
+    setFirebaseOperationProcessing(true);
     try {
-      FirebaseUtils.addRecipeToCollection(displayRecipeData);
+      FirebaseUtils.addRecipeToCollection(displayRecipeData).then(() => {
+        setFirebaseOperationProcessing(false);
+        setFirebaseStatus({
+          status: "success",
+          message: "Recipe added to collection!",
+        });
+      });
     } catch (error) {
-      setFirebaseError(error);
+      setFirebaseStatus({ status: "fail", message: error });
+      setFirebaseOperationProcessing(false);
     }
   };
 
@@ -49,13 +68,13 @@ function RecipeSummarizer() {
   };
 
   useEffect(() => {
-    if (displayRecipeData) {
+    if (recipeData) {
       handleRecipeTranslate();
     }
   }, [language]);
 
   useEffect(() => {
-    if (submittedUrl !== "") {
+    if (submittedUrl !== "" && !dbRecipe) {
       fetchRecipeData();
     }
   }, [submittedUrl]);
@@ -78,7 +97,7 @@ function RecipeSummarizer() {
     };
 
     const setCacheData = (data) => {
-      //   console.log("translated data saved with cache id: ", cacheKey);
+        // console.log("translated data saved with cache id: ", cacheKey);
       localStorage.setItem(cacheKey, JSON.stringify(data));
       localStorage.setItem(`${cacheKey}_timestamp`, new Date().getTime());
     };
@@ -95,12 +114,20 @@ function RecipeSummarizer() {
     const handleCacheMiss = async () => {
       console.log("Data not found in cache");
 
-      if (recipeData) {
+      if(language === 'en'){
+        // console.log("Language is english");
+        setCacheData(recipeData);
+        setDisplayRecipeData(recipeData);
+        setErrorMsg("");
+      } else if( recipeData) {
+        // console.log("Language is not english and recipeData is present");
+
         const newRecipeData = await translateData(recipeData, language);
         setCacheData(newRecipeData);
         setDisplayRecipeData(newRecipeData);
         setErrorMsg("");
       }
+
       setLoading(false);
     };
 
@@ -273,6 +300,7 @@ function RecipeSummarizer() {
 
           const cleanedRecipeData = await cleanupData(recipeObject);
 
+          // console.log("Cleaned data: ", cleanedRecipeData);
           if (cleanedRecipeData) {
             setRecipeData(cleanedRecipeData);
             setDisplayRecipeData(cleanedRecipeData);
@@ -285,6 +313,8 @@ function RecipeSummarizer() {
 
             // console.log("saved in cache with id: ", cacheKey);
             switchLanguage("en");
+          } else {
+            setErrorMsg("No recipe found!");
           }
 
           setLoading(false);
@@ -292,7 +322,7 @@ function RecipeSummarizer() {
           const errorStatus = response.status;
           const errorMessage = await response.text();
           setErrorMsg(`${errorStatus} - ${errorMessage}`);
-          console.log("Error: ", errorMessage);
+          // console.log("Error: ", errorMessage);
           setLoading(false);
         }
       } catch (error) {
@@ -415,7 +445,7 @@ function RecipeSummarizer() {
       <div className="loader">
         <HashLoader color="#36d646" loading={loading} />
       </div>
-      <Navbar
+      {/* <Navbar
         clearBrowserCache={clearBrowserCache}
         handleLanguageChange={handleLanguageChange}
         language={language}
@@ -423,12 +453,94 @@ function RecipeSummarizer() {
         handleUrlChange={handleUrlChange}
         handleFormSubmit={handleFormSubmit}
         url={url}
-      />
+      /> */}
+
+      <div className="container">
+        <div className="accordion recipe-details" id="accordionExample">
+          <div className="accordion-item">
+            <h2 className="accordion-header">
+              <button
+                className="accordion-button"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#collapseOne"
+                aria-expanded="true"
+                aria-controls="collapseOne"
+              >
+                Search Options
+              </button>
+            </h2>
+            <div
+              id="collapseOne"
+              className="accordion-collapse collapse show"
+              data-bs-parent="#accordionExample"
+            >
+              <div className="accordion-body">
+                {!dbRecipe && (
+                  <button
+                    type="button"
+                    className="btn btn-warning btn-sm"
+                    onClick={clearBrowserCache}
+                    disabled={loading}
+                  >
+                    Clear Cache
+                  </button>
+                )}
+
+                <div className="form-floating">
+                  <select
+                    value={language}
+                    onChange={handleLanguageChange}
+                    className="form-select form-control-sm"
+                    id="floatingSelect"
+                    aria-label="Select language"
+                    disabled={loading}
+                  >
+                    {/* <option selected>Select a language</option> */}
+                    <option value="en">English</option>
+                    <option value="mr">Marathi</option>
+                    <option value="hi">Hindi</option>
+                    <option value="kn">Kannada</option>
+                    <option value="te">Telugu</option>
+                    <option value="ta">Tamil</option>
+                  </select>
+                  <label htmlFor="floatingSelect">Language</label>
+                </div>
+
+                {!dbRecipe && (
+                  <form className="d-flex" onSubmit={handleFormSubmit}>
+                    <input
+                      placeholder="Paste a recipe URL"
+                      aria-label="Paste a recipe URL"
+                      className="form-control me-2"
+                      type="text"
+                      id="urlInput"
+                      value={url}
+                      onChange={handleUrlChange}
+                      autoComplete="on"
+                      autoCorrect="on"
+                      disabled={loading}
+                      required
+                    />
+                    <button
+                      className="btn btn-outline-success"
+                      type="submit"
+                      disabled={loading}
+                    >
+                      <FaArrowRight />
+                    </button>
+                  </form>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div className={`container ${language !== "en" ? "devnagari-font" : ""}`}>
         {errorMsg.length > 0 && (
           <div
-            className="alert alert-danger alert-dismissible fade show"
+            className="alert center-alert alert-danger alert-dismissible fade show"
             role="alert"
           >
             <strong>Error!</strong> {errorMsg}
@@ -442,16 +554,20 @@ function RecipeSummarizer() {
           </div>
         )}
 
-        {firebaseError.length > 0 && (
+        {firebaseStatus !== null && (
           <div
-            className="alert alert-danger alert-dismissible fade show"
-            role="firebaseAlert"
+            className={`alert bottom-alert ${
+              firebaseStatus.status == "success"
+                ? "alert-success"
+                : "alert-danger"
+            }  alert-dismissible fade show`}
+            role="alert"
           >
-            <strong>Error!</strong> {firebaseError}
+            {firebaseStatus?.message}
             <button
               type="button"
               className="btn-close"
-              data-bs-dismiss="firebaseAlert"
+              data-bs-dismiss="alert"
               aria-label="Close"
             ></button>
           </div>
@@ -462,11 +578,19 @@ function RecipeSummarizer() {
         <div
           className={`container ${language !== "en" ? "devnagari-font" : ""}`}
         >
-          <div className="floating-button-container">
-            <h2>
-              <BsPlusSquareFill onClick={handleAddRecipe} />
-            </h2>
-          </div>
+          {!dbRecipe && (
+            <div className="floating-button-container">
+              <button
+                type="button"
+                className="btn btn-dark"
+                onClick={handleAddRecipe}
+                disabled={firebaseOperationProcessing}
+              >
+                <BsPlusSquareFill />
+              </button>
+            </div>
+          )}
+
           <div className="card">
             <div className="row align-items-center">
               <div className="col-lg-3 text-center">
@@ -557,20 +681,6 @@ function RecipeSummarizer() {
                   </div>
                 </div>
               </div>
-              {/* <div className="accordion recipe-details" id="accordionExample">
-                                <div className="accordion-item">
-                                    <h2 className="accordion-header">
-                                        <button className="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                                            More details
-                                        </button>
-                                    </h2>
-                                    <div id="collapseOne" className="accordion-collapse collapse show" data-bs-parent="#accordionExample">
-                                        <div className="accordion-body">
-                                            <strong>This is the first item's accordion body.</strong> It is shown by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the <code>.accordion-body</code>, though the transition does limit overflow.
-                                        </div>
-                                    </div>
-                                </div>
-                            </div> */}
             </div>
             <hr />
             <div className="row">

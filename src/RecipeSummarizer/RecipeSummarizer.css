@@ -44,13 +44,21 @@ h2 {
 }
 
 .card {
-  margin: 5rem 0px;
+  margin: 1rem 0px;
   padding: 5px;
 }
 
-.alert {
+.center-alert {
   position: fixed;
   top: calc(50%) !important;
+  left: calc(50%) !important;
+  transform: translate(-50%, -50%);
+  z-index: 5;
+}
+
+.bottom-alert {
+  position: fixed;
+  bottom: 1rem !important;
   left: calc(50%) !important;
   transform: translate(-50%, -50%);
   z-index: 5;
@@ -88,9 +96,7 @@ h2 {
   font-weight: bold;
 }
 
-.recipe-details {
-  margin-top: 10px;
-}
+
 .recipe-time-box span {
   color: rgba(80, 136, 74, 0.69);
 }
@@ -128,4 +134,5 @@ ol li:before {
   transform: translateY(-50%);
   display: flex;
   align-items: center;
+  z-index: 99;
 }

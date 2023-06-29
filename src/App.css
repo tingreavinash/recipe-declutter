@@ -25,3 +25,7 @@ body {
     --gray-border: #e8e8ea;
     --gray-dots: #e8e8ea;
 }
+
+.main-component {
+    margin-top: 5rem;
+}
