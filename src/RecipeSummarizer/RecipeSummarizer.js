@@ -9,6 +9,8 @@ import Navbar from "../Navbar/Navbar";
 import { BsPlusSquareFill } from "react-icons/bs";
 import FirebaseUtils from "../FirebaseUtil/FirebaseUtils";
 import { FaArrowRight } from "react-icons/fa6";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function RecipeSummarizer({ dbRecipe }) {
   const [url, setUrl] = useState("");
@@ -25,7 +27,7 @@ function RecipeSummarizer({ dbRecipe }) {
 
   const textLabels = require(`../Assets/${language}.json`); // Load language-specific translations
 
-  useEffect(() => {
+    useEffect(() => {
     if (dbRecipe) {
       console.log("Db recipe: ", dbRecipe);
       setRecipeData(dbRecipe?.data?.recipeObject);
@@ -42,43 +44,42 @@ function RecipeSummarizer({ dbRecipe }) {
     }
   };
 
-  const [firebaseStatus, setFirebaseStatus] = useState(null);
   const [firebaseOperationProcessing, setFirebaseOperationProcessing] =
     useState(false);
 
-  const handleAddRecipe = (event) => {
-    event.preventDefault();
-    setFirebaseOperationProcessing(true);
-    try {
-      FirebaseUtils.addRecipeToCollection(displayRecipeData).then(() => {
-        setFirebaseOperationProcessing(false);
-        setFirebaseStatus({
-          status: "success",
-          message: "Recipe added to collection!",
-        });
-      });
-    } catch (error) {
-      setFirebaseStatus({ status: "fail", message: error });
-      setFirebaseOperationProcessing(false);
-    }
+  const showToast = async (promiseFunc, toastMessage) => {
+    return await toast.promise(promiseFunc, {
+      pending: {
+        render() {
+          return "Please wait";
+        },
+      },
+      success: {
+        render() {
+          return toastMessage;
+        },
+      },
+      error: {
+        render() {
+          return "Failed";
+        },
+      },
+    });
   };
 
-  const handleDeleteRecipe = (event) => {
+  const handleAddRecipe = async (event) => {
     event.preventDefault();
     setFirebaseOperationProcessing(true);
-    try {
-      FirebaseUtils.deleteRecipeFromCollection(dbRecipe).then(() => {
-        setFirebaseOperationProcessing(false);
-        setFirebaseStatus({
-          status: "success",
-          message: "Recipe removed from collection!",
-        });
-      });
-    } catch (error) {
-      setFirebaseStatus({ status: "fail", message: error });
-      setFirebaseOperationProcessing(false);
-    }
-  }
+    await showToast(FirebaseUtils.addRecipeToCollection(displayRecipeData), "Added to collection!");
+    setFirebaseOperationProcessing(false);
+  };
+
+  const handleDeleteRecipe = async (event) => {
+    event.preventDefault();
+    setFirebaseOperationProcessing(true);
+    await showToast(FirebaseUtils.deleteRecipeFromCollection(dbRecipe), "Removed from collection!");
+    setFirebaseOperationProcessing(false);
+  };
 
   const handleFormSubmit = (event) => {
     event.preventDefault();
@@ -252,11 +253,15 @@ function RecipeSummarizer({ dbRecipe }) {
     }
   };
 
-  const clearBrowserCache = () => {
+  const clearCache = async () => {
     console.warn("Clearing local browser cache!");
     localStorage.clear();
     setRecipeData("");
     setDisplayRecipeData("");
+  }
+
+  const clearBrowserCache = async () => {
+    await showToast(clearCache, "Cache cleared!");
   };
 
   const fetchRecipeData = async () => {
@@ -386,7 +391,8 @@ function RecipeSummarizer({ dbRecipe }) {
   );
 
   const convertISO8601Time = (time) => {
-    const isoRegex = /^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/;
+    const isoRegex =
+      /^PT(?:(\d+)(?:-(\d+))?H)?(?:(\d+)(?:-(\d+))?M)?(?:(\d+)(?:-(\d+))?S)?$/;
     const matches = time?.match(isoRegex);
 
     if (!matches) {
@@ -394,8 +400,9 @@ function RecipeSummarizer({ dbRecipe }) {
     }
 
     const hours = parseInt(matches[1]) || 0;
-    const minutes = parseInt(matches[2]) || 0;
-    const seconds = parseInt(matches[3]) || 0;
+    const minutesLower = parseInt(matches[3]) || 0;
+    const minutesUpper = parseInt(matches[4]) || minutesLower;
+    const seconds = parseInt(matches[5]) || 0;
 
     let result = "";
 
@@ -403,16 +410,22 @@ function RecipeSummarizer({ dbRecipe }) {
       result += `${hours} hour${hours > 1 ? "s" : ""}`;
     }
 
-    if (minutes > 0) {
+    if (minutesLower > 0) {
       if (result) {
         result += " ";
       }
 
-      if (minutes < 60) {
-        result += `${minutes} minute${minutes > 1 ? "s" : ""}`;
+      if (minutesLower < 60) {
+        if (minutesUpper > minutesLower) {
+          result += `${minutesLower}-${minutesUpper} minute${
+            minutesUpper > 1 ? "s" : ""
+          }`;
+        } else {
+          result += `${minutesLower} minute${minutesLower > 1 ? "s" : ""}`;
+        }
       } else {
-        const remainingMinutes = minutes % 60;
-        const hoursFromMinutes = Math.floor(minutes / 60);
+        const remainingMinutes = minutesLower % 60;
+        const hoursFromMinutes = Math.floor(minutesLower / 60);
         result += `${hoursFromMinutes} hour${
           hoursFromMinutes > 1 ? "s" : ""
         } ${remainingMinutes} minute${remainingMinutes > 1 ? "s" : ""}`;
@@ -463,17 +476,9 @@ function RecipeSummarizer({ dbRecipe }) {
       <div className="loader">
         <HashLoader color="#36d646" loading={loading} />
       </div>
-      {/* <Navbar
-        clearBrowserCache={clearBrowserCache}
-        handleLanguageChange={handleLanguageChange}
-        language={language}
-        loading={loading}
-        handleUrlChange={handleUrlChange}
-        handleFormSubmit={handleFormSubmit}
-        url={url}
-      /> */}
 
       <div className="container">
+        <ToastContainer />
         <div className="accordion recipe-details" id="accordionExample">
           <div className="accordion-item">
             <h2 className="accordion-header">
@@ -608,24 +613,6 @@ function RecipeSummarizer({ dbRecipe }) {
           </div>
         )}
 
-        {firebaseStatus !== null && (
-          <div
-            className={`alert bottom-alert ${
-              firebaseStatus.status == "success"
-                ? "alert-success"
-                : "alert-danger"
-            }  alert-dismissible fade show`}
-            role="alert"
-          >
-            {firebaseStatus?.message}
-            <button
-              type="button"
-              className="btn-close"
-              data-bs-dismiss="alert"
-              aria-label="Close"
-            ></button>
-          </div>
-        )}
       </div>
 
       {displayRecipeData ? (
@@ -771,28 +758,6 @@ function RecipeSummarizer({ dbRecipe }) {
         </div>
       ) : (
         <></>
-      )}
-
-      {errorMsg.length > 0 && (
-        <div
-          role="alert"
-          aria-live="assertive"
-          aria-atomic="true"
-          className="toast"
-          data-bs-autohide="true"
-        >
-          <div className="toast-header">
-            <img src="..." className="rounded me-2" alt="..." />
-            <strong className="me-auto">Error</strong>
-            <button
-              type="button"
-              className="btn-close"
-              data-bs-dismiss="toast"
-              aria-label="Close"
-            ></button>
-          </div>
-          <div className="toast-body">{errorMsg}</div>
-        </div>
       )}
     </div>
   );

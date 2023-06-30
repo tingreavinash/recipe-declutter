@@ -3,6 +3,8 @@ import "./Navbar.css";
 import { Link, NavLink } from "react-router-dom";
 
 const Navbar = () => {
+  const appHome = "/recipe-ravamp";
+
   return (
     <nav className="navbar fixed-top navbar-expand-lg bg-body-tertiary">
       <div className="container-fluid">
@@ -23,12 +25,12 @@ const Navbar = () => {
         <div className="collapse navbar-collapse" id="navbarSupportedContent">
           <ul className="navbar-nav me-auto mb-2 mb-lg-0">
             <li className="nav-item">
-              <Link to="/" className="nav-link">
+              <Link to={`${appHome}/`} className="nav-link">
                 Home
               </Link>
             </li>
             <li className="nav-item">
-              <Link to="/collection" className="nav-link">
+              <Link to={`${appHome}/collection`} className="nav-link">
                 Recipe Collection
               </Link>
             </li>

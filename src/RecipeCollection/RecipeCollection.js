@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from "react";
 import FirebaseUtils from "../FirebaseUtil/FirebaseUtils";
-import { async } from "@firebase/util";
 import "./RecipeCollection.css";
 import { HashLoader } from "react-spinners";
 import RecipeSummarizer from "../RecipeSummarizer/RecipeSummarizer";
 import { TfiReload } from "react-icons/tfi";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function RecipeCollection() {
   const [dbRecipes, setDbRecipes] = useState([]);
   const [sortedArray, setSortedArray] = useState([]);
-  const [firebaseOperationProcessing, setFirebaseOperationProcessing] =
-    useState(false);
+
 
   const [selectedRecipeId, setSelectedRecipeId] = useState("");
   const [displayRecipe, setDisplayRecipe] = useState(null);
@@ -18,14 +18,8 @@ function RecipeCollection() {
 
 
   useEffect(() => {
-
-    console.log("Original array:", dbRecipes)
-
     const result = sortObjectsByName(dbRecipes);
-
     setSortedArray(result);
-    console.log("Sorted array:", result)
-
   }, [dbRecipes]);
 
   function sortObjectsByName(objects) {
@@ -44,9 +38,10 @@ function RecipeCollection() {
   }
   
 
-  useEffect(() => {
-    handleGetRecipes();
+  useEffect( () => {
+    handleGetRecipes()
   }, []);
+
 
   const handleSelectRecipe = (recipeId) => {
     setSelectedRecipeId(recipeId);
@@ -64,30 +59,48 @@ function RecipeCollection() {
     }
   }, [selectedRecipeId]);
 
-  const refreshCacheData = async (event) => {
-    event.preventDefault();
 
+  const showToast = async (promiseFunc, toastMessage) => {
+    return await toast.promise(promiseFunc, {
+      pending: {
+        render() {
+          return "Please wait";
+        },
+      },
+      success: {
+        render() {
+          return toastMessage;
+        },
+      },
+      error: {
+        render() {
+          return "Failed";
+        },
+      },
+    });
+  };
+
+  const getAllRecipes = async () => {
     const cacheKey = `db_recipes_all`;
 
     const setCacheData = (data) => {
       localStorage.setItem(cacheKey, JSON.stringify(data));
       localStorage.setItem(`${cacheKey}_timestamp`, new Date().getTime());
     };
-
     console.log("Refreshing data from remote");
-    setLoading(true);
-    setFirebaseOperationProcessing(true);
+
     try {
       const allRecipes = await FirebaseUtils.getAllRecipes();
       setDbRecipes(allRecipes);
-      setFirebaseOperationProcessing(false);
       setCacheData(allRecipes);
     } catch (error) {
-      console.error("Error occurred while fetching recipes: ", error);
-      setFirebaseOperationProcessing(false);
+      throw error;
     }
+  }
 
-    setLoading(false);
+  const refreshCacheData = async (event) => {
+    event.preventDefault();
+    await showToast(getAllRecipes(), "Success");
   };
 
   const handleGetRecipes = async () => {
@@ -121,15 +134,12 @@ function RecipeCollection() {
     const handleCacheMiss = async () => {
       console.log("Data not found in cache");
 
-      setFirebaseOperationProcessing(true);
       try {
         const allRecipes = await FirebaseUtils.getAllRecipes();
         setDbRecipes(allRecipes);
-        setFirebaseOperationProcessing(false);
         setCacheData(allRecipes);
       } catch (error) {
         console.error("Error occurred while fetching recipes: ", error);
-        setFirebaseOperationProcessing(false);
       }
 
       setLoading(false);
@@ -156,6 +166,8 @@ function RecipeCollection() {
   };
 
   return (
+    
+    <>
     <div className="container">
       {/* <button
         type="button"
@@ -169,6 +181,9 @@ function RecipeCollection() {
       <div className="loader">
         <HashLoader color="#36d646" loading={loading} />
       </div>
+
+      <ToastContainer />
+
 
       <div className="container">
         <div className="row justify-content-center" style={{marginBottom: '10px'}}>
@@ -222,8 +237,10 @@ function RecipeCollection() {
         </div>
       </div>
 
-      {displayRecipe !== null && <RecipeSummarizer dbRecipe={displayRecipe} />}
+      
     </div>
+    {displayRecipe !== null && <RecipeSummarizer dbRecipe={displayRecipe} />}
+    </>
   );
 }
 

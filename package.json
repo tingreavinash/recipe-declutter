@@ -1,7 +1,7 @@
 {
   "name": "recipe-summarizer",
   "version": "0.1.0",
-  "homepage": "/recipe-declutter-dashboard/#",
+  "homepage": "https://tingreavinash.github.io/recipe-revamp/",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^5.16.5",
@@ -20,6 +20,7 @@
     "react-scripts": "5.0.1",
     "react-spinners": "^0.13.8",
     "react-to-print": "^2.14.13",
+    "react-toastify": "^9.1.3",
     "web-vitals": "^2.1.4"
   },
   "scripts": {

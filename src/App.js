@@ -9,16 +9,17 @@ import { Routes, Route } from "react-router-dom";
 import RecipeCollection from "./RecipeCollection/RecipeCollection";
 
 function App() {
+  const appHome = "/recipe-ravamp";
   return (
     <>
       <LanguageProvider>
         <Navbar />
         <div className="main-component">
           <Routes>
-            <Route path="/" element={<RecipeSummarizer />} />
+            <Route path={`${appHome}/`}  element={<RecipeSummarizer />} />
             {/* <Route path="/about" element={<About />} /> */}
-            <Route path="/homepage" element={<RecipeSummarizer />} />
-            <Route path="/collection" element={<RecipeCollection />} />
+            <Route path={`${appHome}/home`} element={<RecipeSummarizer />} />
+            <Route path={`${appHome}/collection`}  element={<RecipeCollection />} />
           </Routes>
         </div>
       </LanguageProvider>
