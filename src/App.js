@@ -11,7 +11,7 @@ import { ToastContainer } from "react-toastify";
 import Footer from "./Footer/Footer";
 
 function App() {
-  const appHome = "/recipe-ravamp";
+  const appHome = "/recipe-revamp";
   return (
     <>
       <LanguageProvider>
@@ -27,8 +27,9 @@ function App() {
               element={<RecipeCollection />}
             />
           </Routes>
-          <Footer />
         </div>
+        <Footer />
+
 
       </LanguageProvider>
     </>
