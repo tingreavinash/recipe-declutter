@@ -4,21 +4,14 @@ on:
   push
 
 jobs:
-  build:
+  deploy_live_website:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      # Add any build steps here. For example:
+      # - run: npm ci && npm run build
+      - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
-          node-version: '18'
-      - name: Check node version
-        run: node -v
-      - run: npm ci
-      - name: Build Project
-        run: CI=false npm run build
-      - name: GitHub Action for Firebase
-        run: npm install -g firebase-tools@10.9.2
-      - run: firebase init
-      - run: firebase deploy
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT_RECIPE_REVAMP }}"
+          projectId: roomies-74233
+          channelId: live
