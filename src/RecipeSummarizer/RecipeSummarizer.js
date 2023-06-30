@@ -314,7 +314,7 @@ function RecipeSummarizer({ dbRecipe }) {
         setDisplayRecipeData(parsedData);
         setErrorMsg("");
 
-        // console.log("Recipe Data: ", parsedData);
+        console.log("Recipe Data: ", parsedData);
         setLoading(false);
         switchLanguage("en");
       } else {
@@ -353,7 +353,7 @@ function RecipeSummarizer({ dbRecipe }) {
 
           const cleanedRecipeData = await cleanupData(recipeObject);
 
-          // console.log("Cleaned data: ", cleanedRecipeData);
+          console.log("Cleaned data: ", cleanedRecipeData);
           if (cleanedRecipeData) {
             setRecipeData(cleanedRecipeData);
             setDisplayRecipeData(cleanedRecipeData);
@@ -477,6 +477,8 @@ function RecipeSummarizer({ dbRecipe }) {
         displayImage = recipe.image[0];
       } else if (typeof recipe.image === "object") {
         displayImage = recipe.image.url || "";
+      } else if (typeof recipe.image === "string") {
+        displayImage = recipe.image;
       }
     }
 
