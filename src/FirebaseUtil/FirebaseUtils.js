@@ -13,13 +13,13 @@ class FirebaseUtils {
     let sanitizedId = null;
     if (recipeData["@id"]) {
       sanitizedId = recipeData["@id"].replace(/[^a-zA-Z0-9]/g, "_");
-    } else if (recipeData?.datePublished) {
-      sanitizedId = recipeData?.datePublished.replace(/[^a-zA-Z0-9]/g, "_");
     } else if (recipeData?.url) {
       sanitizedId = recipeData?.url.replace(/[^a-zA-Z0-9]/g, "_");
+    } else if (recipeData?.datePublished) {
+      sanitizedId = recipeData?.datePublished.replace(/[^a-zA-Z0-9]/g, "_");
     } else {
       sanitizedId = recipeData?.name.replace(/[^a-zA-Z0-9]/g, "_");
-    }
+    } 
     return sanitizedId;
   }
 
