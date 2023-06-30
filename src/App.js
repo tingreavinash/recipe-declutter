@@ -1,5 +1,5 @@
 import "./App.css";
-import RecipeSummarizer from "./RecipeSummarizer/RecipeSummarizer";
+import RecipeSearch from "./RecipeSearch/RecipeSearch";
 import { LanguageProvider } from "./LanguageContext/LanguageContext";
 import About from "./About/About";
 
@@ -19,9 +19,9 @@ function App() {
         <ToastContainer />
         <div className="main-component">
           <Routes>
-            <Route path={`${appHome}/`} element={<RecipeSummarizer />} />
+            <Route path={`${appHome}/`} element={<RecipeSearch />} />
             {/* <Route path="/about" element={<About />} /> */}
-            <Route path={`${appHome}/home`} element={<RecipeSummarizer />} />
+            <Route path={`${appHome}/home`} element={<RecipeSearch />} />
             <Route
               path={`${appHome}/collection`}
               element={<RecipeCollection />}

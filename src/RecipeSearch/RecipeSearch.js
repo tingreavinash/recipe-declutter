@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect } from "react";
 import cheerio from "cheerio";
-import "./RecipeSummarizer.css";
+import "./RecipeSearch.css";
 import { RxLapTimer } from "react-icons/rx";
 import { HashLoader } from "react-spinners";
 import { setCORS } from "google-translate-api-browser";
@@ -11,7 +11,7 @@ import { FaArrowRight } from "react-icons/fa6";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-function RecipeSummarizer({ dbRecipe }) {
+function RecipeSearch({ dbRecipe }) {
   const [url, setUrl] = useState("");
   const [submittedUrl, setSubmittedUrl] = useState("");
 
@@ -105,7 +105,7 @@ function RecipeSummarizer({ dbRecipe }) {
     event.preventDefault();
     setFirebaseOperationProcessing(true);
     await showToast(
-      FirebaseUtils.addRecipeToCollection(displayRecipeData),
+      FirebaseUtils.addRecipeToCollection(recipeData),
       "Added to collection!"
     );
     setFirebaseOperationProcessing(false);
@@ -780,4 +780,4 @@ function RecipeSummarizer({ dbRecipe }) {
   );
 }
 
-export default RecipeSummarizer;
+export default RecipeSearch;

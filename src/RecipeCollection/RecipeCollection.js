@@ -2,9 +2,9 @@ import React, { useEffect, useState } from "react";
 import FirebaseUtils from "../FirebaseUtil/FirebaseUtils";
 import "./RecipeCollection.css";
 import { HashLoader } from "react-spinners";
-import RecipeSummarizer from "../RecipeSummarizer/RecipeSummarizer";
+import RecipeSearch from "../RecipeSearch/RecipeSearch";
 import { TfiReload } from "react-icons/tfi";
-import {  toast } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 function RecipeCollection() {
@@ -64,7 +64,7 @@ function RecipeCollection() {
       pauseOnHover: true,
       draggable: true,
       progress: undefined,
-      theme: "light"
+      theme: "light",
     };
 
     return await toast.promise(promiseFunc, {
@@ -79,7 +79,7 @@ function RecipeCollection() {
         pauseOnHover: toastProperties.pauseOnHover,
         draggable: toastProperties.draggable,
         progress: toastProperties.progress,
-        theme: toastProperties.theme
+        theme: toastProperties.theme,
       },
       success: {
         render() {
@@ -92,7 +92,7 @@ function RecipeCollection() {
         pauseOnHover: toastProperties.pauseOnHover,
         draggable: toastProperties.draggable,
         progress: toastProperties.progress,
-        theme: toastProperties.theme
+        theme: toastProperties.theme,
       },
       error: {
         render() {
@@ -105,7 +105,7 @@ function RecipeCollection() {
         pauseOnHover: toastProperties.pauseOnHover,
         draggable: toastProperties.draggable,
         progress: toastProperties.progress,
-        theme: toastProperties.theme
+        theme: toastProperties.theme,
       },
     });
   };
@@ -147,7 +147,6 @@ function RecipeCollection() {
   const cacheKey = `db_recipes_all`;
   const cacheExpiry = 60 * 60 * 1000 * 24; // 24 hour (in milliseconds)
 
-
   const getCachedData = () => {
     const cachedData = localStorage.getItem(cacheKey);
     const cacheTimestamp = localStorage.getItem(`${cacheKey}_timestamp`);
@@ -186,10 +185,9 @@ function RecipeCollection() {
     setLoading(false);
   };
 
-  
   const handleRemoveFromCache = async (recipeId) => {
     const { cachedData } = getCachedData();
-  
+
     if (cachedData) {
       const parsedCacheData = JSON.parse(cachedData);
       const updatedCacheData = parsedCacheData.filter(
@@ -199,7 +197,6 @@ function RecipeCollection() {
     }
   };
 
-  
   const handleCache = async () => {
     const { cachedData, cacheTimestamp } = getCachedData();
 
@@ -218,7 +215,6 @@ function RecipeCollection() {
   };
 
   const handleGetRecipes = async () => {
-
     setLoading(true);
     handleCache();
   };
@@ -238,7 +234,6 @@ function RecipeCollection() {
         <div className="loader">
           <HashLoader color="#36d646" loading={loading} />
         </div>
-
 
         <div className="container">
           <div
@@ -270,7 +265,6 @@ function RecipeCollection() {
                 aria-controls="recipeCollectionAccordion"
               >
                 Bookmarked Recipes
-                
               </button>
             </h2>
             <div
@@ -306,6 +300,10 @@ function RecipeCollection() {
                                 type="button"
                                 className="btn btn-outline-success"
                                 onClick={() => handleSelectRecipe(recipe?.id)}
+                                data-bs-toggle="collapse"
+                                data-bs-target="#recipeCollectionAccordion"
+                                aria-expanded="true"
+                                aria-controls="recipeCollectionAccordion"
                               >
                                 View
                               </button>
@@ -332,7 +330,7 @@ function RecipeCollection() {
           </div>
         </div>
       </div>
-      {displayRecipe !== null && <RecipeSummarizer dbRecipe={displayRecipe} />}
+      {displayRecipe !== null && <RecipeSearch dbRecipe={displayRecipe} />}
     </>
   );
 }
