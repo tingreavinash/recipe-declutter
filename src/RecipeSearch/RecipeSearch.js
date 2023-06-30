@@ -314,7 +314,7 @@ function RecipeSearch({ dbRecipe }) {
         setDisplayRecipeData(parsedData);
         setErrorMsg("");
 
-        console.log("Recipe Data: ", parsedData);
+        // console.log("Recipe Data: ", parsedData);
         setLoading(false);
         switchLanguage("en");
       } else {
