@@ -5,8 +5,7 @@ import { RxLapTimer } from "react-icons/rx";
 import { HashLoader } from "react-spinners";
 import { setCORS } from "google-translate-api-browser";
 import LanguageContext from "../LanguageContext/LanguageContext";
-import Navbar from "../Navbar/Navbar";
-import { BsPlusSquareFill } from "react-icons/bs";
+
 import FirebaseUtils from "../FirebaseUtil/FirebaseUtils";
 import { FaArrowRight } from "react-icons/fa6";
 import { ToastContainer, toast } from "react-toastify";
@@ -29,7 +28,7 @@ function RecipeSummarizer({ dbRecipe }) {
 
     useEffect(() => {
     if (dbRecipe) {
-      console.log("Db recipe: ", dbRecipe);
+      // console.log("Db recipe: ", dbRecipe);
       setRecipeData(dbRecipe?.data?.recipeObject);
       setDisplayRecipeData(dbRecipe?.data?.recipeObject);
       setSubmittedUrl(dbRecipe?.data?.recipeObject["@id"]);
@@ -74,12 +73,6 @@ function RecipeSummarizer({ dbRecipe }) {
     setFirebaseOperationProcessing(false);
   };
 
-  const handleDeleteRecipe = async (event) => {
-    event.preventDefault();
-    setFirebaseOperationProcessing(true);
-    await showToast(FirebaseUtils.deleteRecipeFromCollection(dbRecipe), "Removed from collection!");
-    setFirebaseOperationProcessing(false);
-  };
 
   const handleFormSubmit = (event) => {
     event.preventDefault();
@@ -513,18 +506,7 @@ function RecipeSummarizer({ dbRecipe }) {
                     </div>
                   )}
 
-                  {dbRecipe && displayRecipeData && (
-                    <div className="col-auto">
-                      <button
-                        type="button"
-                        className="btn btn-danger"
-                        onClick={handleDeleteRecipe}
-                        disabled={firebaseOperationProcessing}
-                      >
-                        Remove from Favorite
-                      </button>
-                    </div>
-                  )}
+                  
 
                   {!dbRecipe && (
                     <div className="col-auto">

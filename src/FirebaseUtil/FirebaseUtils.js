@@ -21,8 +21,8 @@ class FirebaseUtils {
     const favRecipesRef = collection(firestore, "favRecipes"); // Firebase creates this automatically
     try {
       const recipeId = this.generateDocId(recipeData);
-      console.log("recipeid: ", recipeId);
-      console.log("recipeData: ", recipeData);
+      // console.log("recipeid: ", recipeId);
+      // console.log("recipeData: ", recipeData);
       await setDoc(doc(favRecipesRef, recipeId), {
         updatedOn: Date.now(),
         recipeObject: recipeData,
@@ -34,11 +34,11 @@ class FirebaseUtils {
     }
   }
 
-  static async deleteRecipeFromCollection(dbRecipe) {
+  static async deleteRecipeFromCollection(recipeId) {
     const favRecipesRef = collection(firestore, "favRecipes"); // Firebase creates this automatically
     try {
-      console.log("recipeid: ", dbRecipe?.id);
-      await deleteDoc(doc(favRecipesRef, dbRecipe?.id));
+      // console.log("recipeid: ", recipeId);
+      await deleteDoc(doc(favRecipesRef, recipeId));
       console.log("Recipe removed from collection.");
     } catch (err) {
       console.log(err);
