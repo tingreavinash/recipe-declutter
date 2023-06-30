@@ -29,3 +29,7 @@ body {
 .main-component {
     margin-top: 5rem;
 }
+
+.toast-container {
+    z-index: 999;
+}

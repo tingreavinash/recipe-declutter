@@ -8,9 +8,11 @@ const Navbar = () => {
   return (
     <nav className="navbar fixed-top navbar-expand-lg bg-body-tertiary">
       <div className="container-fluid">
-        <a className="navbar-brand" href="#">
-          Recipe Revamp
-        </a>
+
+
+        <Link to={`${appHome}/`} className="navbar-brand">
+                Recipe Revamp
+              </Link>
         <button
           className="navbar-toggler"
           type="button"
@@ -31,7 +33,7 @@ const Navbar = () => {
             </li>
             <li className="nav-item">
               <Link to={`${appHome}/collection`} className="nav-link">
-                Recipe Collection
+                Bookmarked Recipes
               </Link>
             </li>
             {/* <li className="nav-item">
@@ -42,6 +44,7 @@ const Navbar = () => {
           </ul>
         </div>
       </div>
+      
     </nav>
   );
 };

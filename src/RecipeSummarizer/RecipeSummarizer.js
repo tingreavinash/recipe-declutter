@@ -8,7 +8,7 @@ import LanguageContext from "../LanguageContext/LanguageContext";
 
 import FirebaseUtils from "../FirebaseUtil/FirebaseUtils";
 import { FaArrowRight } from "react-icons/fa6";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 function RecipeSummarizer({ dbRecipe }) {
@@ -26,7 +26,7 @@ function RecipeSummarizer({ dbRecipe }) {
 
   const textLabels = require(`../Assets/${language}.json`); // Load language-specific translations
 
-    useEffect(() => {
+  useEffect(() => {
     if (dbRecipe) {
       // console.log("Db recipe: ", dbRecipe);
       setRecipeData(dbRecipe?.data?.recipeObject);
@@ -47,21 +47,56 @@ function RecipeSummarizer({ dbRecipe }) {
     useState(false);
 
   const showToast = async (promiseFunc, toastMessage) => {
+    const toastProperties = {
+      position: "bottom-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      theme: "light"
+    };
+
     return await toast.promise(promiseFunc, {
       pending: {
         render() {
           return "Please wait";
         },
+        position: toastProperties.position,
+        autoClose: toastProperties.autoClose,
+        hideProgressBar: toastProperties.hideProgressBar,
+        closeOnClick: toastProperties.closeOnClick,
+        pauseOnHover: toastProperties.pauseOnHover,
+        draggable: toastProperties.draggable,
+        progress: toastProperties.progress,
+        theme: toastProperties.theme
       },
       success: {
         render() {
           return toastMessage;
         },
+        position: toastProperties.position,
+        autoClose: toastProperties.autoClose,
+        hideProgressBar: toastProperties.hideProgressBar,
+        closeOnClick: toastProperties.closeOnClick,
+        pauseOnHover: toastProperties.pauseOnHover,
+        draggable: toastProperties.draggable,
+        progress: toastProperties.progress,
+        theme: toastProperties.theme
       },
       error: {
         render() {
           return "Failed";
         },
+        position: toastProperties.position,
+        autoClose: toastProperties.autoClose,
+        hideProgressBar: toastProperties.hideProgressBar,
+        closeOnClick: toastProperties.closeOnClick,
+        pauseOnHover: toastProperties.pauseOnHover,
+        draggable: toastProperties.draggable,
+        progress: toastProperties.progress,
+        theme: toastProperties.theme
       },
     });
   };
@@ -69,10 +104,12 @@ function RecipeSummarizer({ dbRecipe }) {
   const handleAddRecipe = async (event) => {
     event.preventDefault();
     setFirebaseOperationProcessing(true);
-    await showToast(FirebaseUtils.addRecipeToCollection(displayRecipeData), "Added to collection!");
+    await showToast(
+      FirebaseUtils.addRecipeToCollection(displayRecipeData),
+      "Added to collection!"
+    );
     setFirebaseOperationProcessing(false);
   };
-
 
   const handleFormSubmit = (event) => {
     event.preventDefault();
@@ -251,7 +288,7 @@ function RecipeSummarizer({ dbRecipe }) {
     localStorage.clear();
     setRecipeData("");
     setDisplayRecipeData("");
-  }
+  };
 
   const clearBrowserCache = async () => {
     await showToast(clearCache, "Cache cleared!");
@@ -471,7 +508,6 @@ function RecipeSummarizer({ dbRecipe }) {
       </div>
 
       <div className="container">
-        <ToastContainer />
         <div className="accordion recipe-details" id="accordionExample">
           <div className="accordion-item">
             <h2 className="accordion-header">
@@ -492,12 +528,12 @@ function RecipeSummarizer({ dbRecipe }) {
               data-bs-parent="#accordionExample"
             >
               <div className="accordion-body">
-                <div className="row options-row justify-content-center">
+                <div className="row option-button justify-content-center">
                   {!dbRecipe && displayRecipeData && (
-                    <div className="col-auto">
+                    <div className="col-auto option-button">
                       <button
                         type="button"
-                        className="btn btn-success"
+                        className="btn btn-outline-success"
                         onClick={handleAddRecipe}
                         disabled={firebaseOperationProcessing}
                       >
@@ -506,13 +542,11 @@ function RecipeSummarizer({ dbRecipe }) {
                     </div>
                   )}
 
-                  
-
                   {!dbRecipe && (
-                    <div className="col-auto">
+                    <div className="col-auto option-button">
                       <button
                         type="button"
-                        className="btn btn-warning"
+                        className="btn btn-outline-danger"
                         onClick={clearBrowserCache}
                         disabled={loading}
                       >
@@ -521,7 +555,7 @@ function RecipeSummarizer({ dbRecipe }) {
                     </div>
                   )}
 
-                  <div className="col-auto">
+                  <div className="col-auto option-button">
                     <label
                       className="visually-hidden"
                       htmlFor="autoSizingSelect"
@@ -594,7 +628,6 @@ function RecipeSummarizer({ dbRecipe }) {
             ></button>
           </div>
         )}
-
       </div>
 
       {displayRecipeData ? (

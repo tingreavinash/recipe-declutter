@@ -30,8 +30,8 @@ img {
   color: gray;
 }
 
-.options-row{
-  padding: 5px;
+.option-button{
+  margin-bottom: 5px
 }
 
 .loader {

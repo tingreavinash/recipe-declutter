@@ -4,7 +4,7 @@ import "./RecipeCollection.css";
 import { HashLoader } from "react-spinners";
 import RecipeSummarizer from "../RecipeSummarizer/RecipeSummarizer";
 import { TfiReload } from "react-icons/tfi";
-import { ToastContainer, toast } from "react-toastify";
+import {  toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 function RecipeCollection() {
@@ -56,21 +56,56 @@ function RecipeCollection() {
   }, [selectedRecipeId]);
 
   const showToast = async (promiseFunc, toastMessage) => {
+    const toastProperties = {
+      position: "bottom-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      theme: "light"
+    };
+
     return await toast.promise(promiseFunc, {
       pending: {
         render() {
           return "Please wait";
         },
+        position: toastProperties.position,
+        autoClose: toastProperties.autoClose,
+        hideProgressBar: toastProperties.hideProgressBar,
+        closeOnClick: toastProperties.closeOnClick,
+        pauseOnHover: toastProperties.pauseOnHover,
+        draggable: toastProperties.draggable,
+        progress: toastProperties.progress,
+        theme: toastProperties.theme
       },
       success: {
         render() {
           return toastMessage;
         },
+        position: toastProperties.position,
+        autoClose: toastProperties.autoClose,
+        hideProgressBar: toastProperties.hideProgressBar,
+        closeOnClick: toastProperties.closeOnClick,
+        pauseOnHover: toastProperties.pauseOnHover,
+        draggable: toastProperties.draggable,
+        progress: toastProperties.progress,
+        theme: toastProperties.theme
       },
       error: {
         render() {
           return "Failed";
         },
+        position: toastProperties.position,
+        autoClose: toastProperties.autoClose,
+        hideProgressBar: toastProperties.hideProgressBar,
+        closeOnClick: toastProperties.closeOnClick,
+        pauseOnHover: toastProperties.pauseOnHover,
+        draggable: toastProperties.draggable,
+        progress: toastProperties.progress,
+        theme: toastProperties.theme
       },
     });
   };
@@ -82,6 +117,8 @@ function RecipeCollection() {
       FirebaseUtils.deleteRecipeFromCollection(recipeId),
       "Removed from collection!"
     );
+    handleRemoveFromCache(recipeId);
+    handleCache();
   };
 
   const getAllRecipes = async () => {
@@ -104,67 +141,84 @@ function RecipeCollection() {
 
   const refreshCacheData = async (event) => {
     event.preventDefault();
-    await showToast(getAllRecipes(), "Success");
+    await showToast(getAllRecipes(), "Data refreshed!");
   };
 
-  const handleGetRecipes = async () => {
-    const cacheKey = `db_recipes_all`;
-    const cacheExpiry = 60 * 60 * 1000 * 24; // 24 hour (in milliseconds)
+  const cacheKey = `db_recipes_all`;
+  const cacheExpiry = 60 * 60 * 1000 * 24; // 24 hour (in milliseconds)
 
-    const getCachedData = () => {
-      const cachedData = localStorage.getItem(cacheKey);
-      const cacheTimestamp = localStorage.getItem(`${cacheKey}_timestamp`);
-      return { cachedData, cacheTimestamp };
-    };
 
-    const isCacheExpired = () => {
-      const currentTime = new Date().getTime();
-      const cacheTimestamp = Number(getCachedData().cacheTimestamp);
-      return currentTime - cacheTimestamp > cacheExpiry;
-    };
+  const getCachedData = () => {
+    const cachedData = localStorage.getItem(cacheKey);
+    const cacheTimestamp = localStorage.getItem(`${cacheKey}_timestamp`);
+    return { cachedData, cacheTimestamp };
+  };
 
-    const setCacheData = (data) => {
-      localStorage.setItem(cacheKey, JSON.stringify(data));
-      localStorage.setItem(`${cacheKey}_timestamp`, new Date().getTime());
-    };
+  const isCacheExpired = () => {
+    const currentTime = new Date().getTime();
+    const cacheTimestamp = Number(getCachedData().cacheTimestamp);
+    return currentTime - cacheTimestamp > cacheExpiry;
+  };
 
-    const handleCacheHit = () => {
-      const { cachedData } = getCachedData();
-      const parsedData = JSON.parse(cachedData);
-      setDbRecipes(parsedData);
-      setLoading(false);
-    };
+  const setCacheData = (data) => {
+    localStorage.setItem(cacheKey, JSON.stringify(data));
+    localStorage.setItem(`${cacheKey}_timestamp`, new Date().getTime());
+  };
 
-    const handleCacheMiss = async () => {
-      console.log("Data not found in cache");
+  const handleCacheHit = () => {
+    const { cachedData } = getCachedData();
+    const parsedData = JSON.parse(cachedData);
+    setDbRecipes(parsedData);
+    setLoading(false);
+  };
 
-      try {
-        const allRecipes = await FirebaseUtils.getAllRecipes();
-        setDbRecipes(allRecipes);
-        setCacheData(allRecipes);
-      } catch (error) {
-        console.error("Error occurred while fetching recipes: ", error);
-      }
+  const handleCacheMiss = async () => {
+    console.log("Data not found in cache");
 
-      setLoading(false);
-    };
+    try {
+      const allRecipes = await FirebaseUtils.getAllRecipes();
+      setDbRecipes(allRecipes);
+      setCacheData(allRecipes);
+    } catch (error) {
+      console.error("Error occurred while fetching recipes: ", error);
+    }
 
-    const handleCache = async () => {
-      const { cachedData, cacheTimestamp } = getCachedData();
+    setLoading(false);
+  };
 
-      if (cachedData && cacheTimestamp && !isCacheExpired()) {
-        const parsedCacheData = JSON.parse(cachedData);
-        if (Array.isArray(parsedCacheData) && parsedCacheData.length > 0) {
-          handleCacheHit();
-        } else {
-          console.log("Cache data expired");
-          handleCacheMiss();
-        }
+  
+  const handleRemoveFromCache = async (recipeId) => {
+    const { cachedData } = getCachedData();
+  
+    if (cachedData) {
+      const parsedCacheData = JSON.parse(cachedData);
+      const updatedCacheData = parsedCacheData.filter(
+        (recipe) => recipe.id !== recipeId
+      );
+      setCacheData(updatedCacheData);
+    }
+  };
+
+  
+  const handleCache = async () => {
+    const { cachedData, cacheTimestamp } = getCachedData();
+
+    if (cachedData && cacheTimestamp && !isCacheExpired()) {
+      const parsedCacheData = JSON.parse(cachedData);
+      if (Array.isArray(parsedCacheData) && parsedCacheData.length > 0) {
+        handleCacheHit();
       } else {
         console.log("Cache data expired");
         handleCacheMiss();
       }
-    };
+    } else {
+      console.log("Cache data expired");
+      handleCacheMiss();
+    }
+  };
+
+  const handleGetRecipes = async () => {
+
     setLoading(true);
     handleCache();
   };
@@ -185,7 +239,6 @@ function RecipeCollection() {
           <HashLoader color="#36d646" loading={loading} />
         </div>
 
-        <ToastContainer />
 
         <div className="container">
           <div
@@ -216,7 +269,7 @@ function RecipeCollection() {
                 aria-expanded="true"
                 aria-controls="recipeCollectionAccordion"
               >
-                Recipe Collection
+                Bookmarked Recipes
                 
               </button>
             </h2>
@@ -231,7 +284,7 @@ function RecipeCollection() {
                     <div className="accordion-item">
                       <h2 className="accordion-header">
                         <button
-                          className="accordion-button collapsed"
+                          className="accordion-button bg-body collapsed"
                           type="button"
                           data-bs-toggle="collapse"
                           data-bs-target={`#collapseItem${index}`}
@@ -251,7 +304,7 @@ function RecipeCollection() {
                             <div className="col-auto">
                               <button
                                 type="button"
-                                className="btn btn-success"
+                                className="btn btn-outline-success"
                                 onClick={() => handleSelectRecipe(recipe?.id)}
                               >
                                 View
@@ -260,7 +313,7 @@ function RecipeCollection() {
                             <div className="col-auto">
                               <button
                                 type="button"
-                                className="btn btn-danger"
+                                className="btn btn-outline-danger"
                                 onClick={(event) =>
                                   handleDeleteRecipe(recipe?.id, event)
                                 }
