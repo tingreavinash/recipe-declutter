@@ -8,6 +8,7 @@ import Navbar from "./Navbar/Navbar";
 import { Routes, Route } from "react-router-dom";
 import RecipeCollection from "./RecipeCollection/RecipeCollection";
 import { ToastContainer } from "react-toastify";
+import Footer from "./Footer/Footer";
 
 function App() {
   const appHome = "/recipe-ravamp";
@@ -26,7 +27,9 @@ function App() {
               element={<RecipeCollection />}
             />
           </Routes>
+          <Footer />
         </div>
+
       </LanguageProvider>
     </>
   );
