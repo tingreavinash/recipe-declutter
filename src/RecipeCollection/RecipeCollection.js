@@ -274,6 +274,7 @@ function RecipeCollection() {
             >
               <div className="accordion-body">
                 <div className="accordion" id="accordingR1">
+
                   {sortedArray?.map((recipe, index) => (
                     <div className="accordion-item">
                       <h2 className="accordion-header">

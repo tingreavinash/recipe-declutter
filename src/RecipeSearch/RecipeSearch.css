@@ -47,9 +47,14 @@ h2 > .recipe-header {
   padding-top: 10px;
 }
 
-.card {
+.recipe-box {
   margin: 1rem 0px;
   padding: 5px;
+}
+
+.strikeout {
+  text-decoration: line-through;
+  color: gray;
 }
 
 .center-alert {
@@ -139,4 +144,8 @@ ol li:before {
   display: flex;
   align-items: center;
   z-index: 99;
+}
+
+.ingredient-small {
+  color: #999;
 }

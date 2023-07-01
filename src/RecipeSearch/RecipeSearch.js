@@ -14,16 +14,12 @@ import "react-toastify/dist/ReactToastify.css";
 function RecipeSearch({ dbRecipe }) {
   const [url, setUrl] = useState("");
   const [submittedUrl, setSubmittedUrl] = useState("");
-
   const [recipeData, setRecipeData] = useState("");
   const [displayRecipeData, setDisplayRecipeData] = useState("");
-
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-
   const translate = setCORS("https://corsproxy.io/?");
   const { language, switchLanguage } = useContext(LanguageContext);
-
   const textLabels = require(`../Assets/${language}.json`); // Load language-specific translations
 
   useEffect(() => {
@@ -35,6 +31,36 @@ function RecipeSearch({ dbRecipe }) {
     }
   }, [dbRecipe]);
 
+  // Define a state variable to keep track of the checked checkboxes
+  const [checkedItems, setCheckedItems] = useState([]);
+
+  // Function to handle checkbox change
+  const handleCheckboxChange = (e, index) => {
+    const isChecked = e.target.checked;
+
+    // Create a new array based on the current checkedItems state
+    const newCheckedItems = [...checkedItems];
+
+    if (isChecked) {
+      // Add the index to the checkedItems array if checkbox is checked
+      newCheckedItems.push(index);
+    } else {
+      // Remove the index from the checkedItems array if checkbox is unchecked
+      const indexToRemove = newCheckedItems.indexOf(index);
+      if (indexToRemove !== -1) {
+        newCheckedItems.splice(indexToRemove, 1);
+      }
+    }
+
+    // Update the checkedItems state with the new array
+    setCheckedItems(newCheckedItems);
+  };
+
+  // Function to check if a checkbox is checked
+  const isChecked = (index) => {
+    return checkedItems.includes(index);
+  };
+
   const handleLanguageChange = (event) => {
     if (errorMsg.length === 0) {
       const selectedLanguage = event.target.value;
@@ -42,6 +68,47 @@ function RecipeSearch({ dbRecipe }) {
       console.log("Selected language: ", selectedLanguage);
     }
   };
+
+  function replaceOuterParenthesesWithTags(inputString) {
+    let replacedString = inputString;
+    const regex = /\((?:[^()]+)\)/g;
+
+    // Find all matches of outer parentheses using regex
+    const matches = inputString.match(regex);
+
+    if (matches) {
+      // Iterate over each match
+      matches.forEach((match) => {
+        // Replace the match with <small> and </small> tags
+        const replacement = `<xx>${match.slice(1, -1)}</xx>`;
+        replacedString = replacedString.replace(match, replacement);
+      });
+    }
+
+    const regex1 = /\(([^()]+)\)/g;
+    replacedString = replacedString.replace(
+      regex1,
+      "<small class='ingredient-small'>$1</small>"
+    );
+    replacedString = replaceTagsWithParentheses(replacedString);
+
+    return replacedString;
+  }
+
+  function replaceTagsWithParentheses(inputString) {
+    let replacedString;
+    if (inputString.includes("<small") && inputString.includes("</small>")) {
+      replacedString = inputString.replace("<xx>", "(").replace("</xx>", ")");
+    } else {
+      replacedString = inputString
+        .replace("<xx>", `<small class='ingredient-small'>`)
+        .replace("</xx>", "</small>");
+    }
+
+    //replacedString = replacedString.replace("<small>", "<br/><small>");
+
+    return replacedString;
+  }
 
   const [firebaseOperationProcessing, setFirebaseOperationProcessing] =
     useState(false);
@@ -55,7 +122,7 @@ function RecipeSearch({ dbRecipe }) {
       pauseOnHover: true,
       draggable: true,
       progress: undefined,
-      theme: "light"
+      theme: "light",
     };
 
     return await toast.promise(promiseFunc, {
@@ -70,7 +137,7 @@ function RecipeSearch({ dbRecipe }) {
         pauseOnHover: toastProperties.pauseOnHover,
         draggable: toastProperties.draggable,
         progress: toastProperties.progress,
-        theme: toastProperties.theme
+        theme: toastProperties.theme,
       },
       success: {
         render() {
@@ -83,7 +150,7 @@ function RecipeSearch({ dbRecipe }) {
         pauseOnHover: toastProperties.pauseOnHover,
         draggable: toastProperties.draggable,
         progress: toastProperties.progress,
-        theme: toastProperties.theme
+        theme: toastProperties.theme,
       },
       error: {
         render() {
@@ -96,7 +163,7 @@ function RecipeSearch({ dbRecipe }) {
         pauseOnHover: toastProperties.pauseOnHover,
         draggable: toastProperties.draggable,
         progress: toastProperties.progress,
-        theme: toastProperties.theme
+        theme: toastProperties.theme,
       },
     });
   };
@@ -349,7 +416,7 @@ function RecipeSearch({ dbRecipe }) {
             }
           }
 
-          //   const cleanedObject = cleanupData(recipeObject);
+          const cleanedObject = cleanupData(recipeObject);
 
           const cleanedRecipeData = await cleanupData(recipeObject);
 
@@ -636,7 +703,7 @@ function RecipeSearch({ dbRecipe }) {
         <div
           className={`container ${language !== "en" ? "devnagari-font" : ""}`}
         >
-          <div className="card">
+          <div className="recipe-box">
             <div className="row align-items-center">
               <div className="col-lg-3 text-center">
                 <RecipeImage recipe={displayRecipeData} />
@@ -740,17 +807,46 @@ function RecipeSearch({ dbRecipe }) {
                   {textLabels.ingredients}
                 </h2>
                 <div className="recipe-ingredients">
-                  <ul className="list-group">
+                  <ul className="">
                     {displayRecipeData?.recipeIngredient?.map(
                       (ingredient, index) => (
-                        <li
-                          key={index}
-                          className="list-group-item list-group-item-action list-group-item-light"
-                        >
-                          {ingredient}
-                        </li>
+                        <div className="form-check">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            value=""
+                            key={index}
+                            id={`flexCheckDefault_${index}`}
+                            onChange={(e) => handleCheckboxChange(e, index)}
+                          />
+                          <label
+                            className={`form-check-label ${
+                              isChecked(index) ? "strikeout" : ""
+                            }`}
+                            htmlFor={`flexCheckDefault_${index}`}
+                          >
+                            <span
+                              dangerouslySetInnerHTML={{
+                                __html:
+                                  replaceOuterParenthesesWithTags(ingredient),
+                              }}
+                            ></span>
+                          </label>
+                        </div>
                       )
                     )}
+
+                    {/* <li
+                          key={index}
+                          className="list-group-item-action list-group-item-light"
+                        >
+                          <span
+                            dangerouslySetInnerHTML={{
+                              __html: replaceOuterParenthesesWithTags(ingredient),
+                            }}
+                          ></span>
+
+                        </li> */}
                   </ul>
                 </div>
               </div>

@@ -11,7 +11,6 @@ import { ToastContainer } from "react-toastify";
 import Footer from "./Footer/Footer";
 
 function App() {
-  const appHome = "/recipe-revamp";
   return (
     <>
       <LanguageProvider>
@@ -19,18 +18,13 @@ function App() {
         <ToastContainer />
         <div className="main-component">
           <Routes>
-            <Route path={`${appHome}/`} element={<RecipeSearch />} />
+            <Route path="/" element={<RecipeSearch />} />
             {/* <Route path="/about" element={<About />} /> */}
-            <Route path={`${appHome}/home`} element={<RecipeSearch />} />
-            <Route
-              path={`${appHome}/collection`}
-              element={<RecipeCollection />}
-            />
+            <Route path="/home" element={<RecipeSearch />} />
+            <Route path="/collection" element={<RecipeCollection />} />
           </Routes>
         </div>
         <Footer />
-
-
       </LanguageProvider>
     </>
   );

@@ -9,7 +9,7 @@ const Navbar = () => {
   return (
     <nav className="navbar fixed-top navbar-expand-lg bg-body-tertiary">
       <div className="container-fluid">
-        <Link to={`${appHome}/`} className="navbar-brand">
+        <Link to="/" className="navbar-brand">
           Recipe Revamp
         </Link>
         <button
@@ -32,12 +32,12 @@ const Navbar = () => {
         >
           <ul className="navbar-nav me-auto mb-2 mb-lg-0">
             <li className="nav-item">
-              <Link to={`${appHome}/`} className="nav-link">
+              <Link to="/" className="nav-link">
                 Home
               </Link>
             </li>
             <li className="nav-item">
-              <Link to={`${appHome}/collection`} className="nav-link">
+              <Link to="/collection" className="nav-link">
                 Bookmarked Recipes
               </Link>
             </li>
