@@ -1,10 +1,17 @@
 import React, { useEffect, useRef, useState } from "react";
 import "./Navbar.css";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 
-const Navbar = () => {
-  const appHome = "/recipe-revamp";
+const Navbar = ({removeToken}) => {
+  const navigate = useNavigate();
 
+
+  const handleLogout = async (e) => {
+    e.preventDefault();
+    removeToken();
+    localStorage.clear();
+    navigate("/");
+  }
 
   return (
     <nav className="navbar fixed-top navbar-expand-lg bg-body-tertiary">
@@ -41,11 +48,14 @@ const Navbar = () => {
                 Bookmarked Recipes
               </Link>
             </li>
-            {/* <li className="nav-item">
+            <li className="nav-item">
               <Link to="/about" className="nav-link">
                 About
               </Link>
-            </li> */}
+            </li>
+            <li className="nav-item">
+              <a href='#' className="nav-link" onClick={handleLogout}>Logout</a>
+            </li>
           </ul>
         </div>
       </div>

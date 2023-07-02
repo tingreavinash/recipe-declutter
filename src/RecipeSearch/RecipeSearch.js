@@ -8,6 +8,8 @@ import LanguageContext from "../LanguageContext/LanguageContext";
 
 import FirebaseUtils from "../FirebaseUtil/FirebaseUtils";
 import { FaArrowRight } from "react-icons/fa6";
+import { BsBookmark, BsFillBookmarkStarFill } from "react-icons/bs";
+
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -17,19 +19,22 @@ function RecipeSearch({ dbRecipe }) {
   const [recipeData, setRecipeData] = useState("");
   const [displayRecipeData, setDisplayRecipeData] = useState("");
   const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
   const translate = setCORS("https://corsproxy.io/?");
   const { language, switchLanguage } = useContext(LanguageContext);
   const textLabels = require(`../Assets/${language}.json`); // Load language-specific translations
 
   useEffect(() => {
     if (dbRecipe) {
-      // console.log("Db recipe: ", dbRecipe);
       setRecipeData(dbRecipe?.data?.recipeObject);
       setDisplayRecipeData(dbRecipe?.data?.recipeObject);
       setSubmittedUrl(dbRecipe?.data?.recipeObject["@id"]);
     }
   }, [dbRecipe]);
+
+  const handlePrintAction = async (event) => {
+    event.preventDefault();
+    window.print();
+  };
 
   // Define a state variable to keep track of the checked checkboxes
   const [checkedItems, setCheckedItems] = useState([]);
@@ -62,11 +67,9 @@ function RecipeSearch({ dbRecipe }) {
   };
 
   const handleLanguageChange = (event) => {
-    if (errorMsg.length === 0) {
-      const selectedLanguage = event.target.value;
-      switchLanguage(selectedLanguage);
-      console.log("Selected language: ", selectedLanguage);
-    }
+    const selectedLanguage = event.target.value;
+    switchLanguage(selectedLanguage);
+    console.log("Selected language: ", selectedLanguage);
   };
 
   function replaceOuterParenthesesWithTags(inputString) {
@@ -171,14 +174,15 @@ function RecipeSearch({ dbRecipe }) {
   const handleAddRecipe = async (event) => {
     event.preventDefault();
     setFirebaseOperationProcessing(true);
+    console.log("Before adding data to fav: ", recipeData);
     await showToast(
       FirebaseUtils.addRecipeToCollection(recipeData),
-      "Added to collection!"
+      "Recipe bookmarked!"
     );
     setFirebaseOperationProcessing(false);
   };
 
-  const handleFormSubmit = (event) => {
+  const handleFormSubmit = async (event) => {
     event.preventDefault();
     setSubmittedUrl(url);
   };
@@ -190,7 +194,8 @@ function RecipeSearch({ dbRecipe }) {
   }, [language]);
 
   useEffect(() => {
-    if (submittedUrl !== "" && !dbRecipe) {
+    console.log("DB Recipe: ", dbRecipe);
+    if (submittedUrl !== "") {
       fetchRecipeData();
     }
   }, [submittedUrl]);
@@ -222,26 +227,22 @@ function RecipeSearch({ dbRecipe }) {
       const { cachedData } = getCachedData();
       const parsedData = JSON.parse(cachedData);
       setDisplayRecipeData(parsedData);
-      setErrorMsg("");
-
       setLoading(false);
     };
 
     const handleCacheMiss = async () => {
       console.log("Data not found in cache");
 
-      if (language === "en") {
+      if (language === "en" && recipeData) {
         // console.log("Language is english");
         setCacheData(recipeData);
         setDisplayRecipeData(recipeData);
-        setErrorMsg("");
       } else if (recipeData) {
         // console.log("Language is not english and recipeData is present");
 
         const newRecipeData = await translateData(recipeData, language);
         setCacheData(newRecipeData);
         setDisplayRecipeData(newRecipeData);
-        setErrorMsg("");
       }
 
       setLoading(false);
@@ -372,15 +373,17 @@ function RecipeSearch({ dbRecipe }) {
     const cacheTimestamp = localStorage.getItem(`${cacheKey}_timestamp`);
 
     if (cachedData && cacheTimestamp) {
+
       const currentTime = new Date().getTime();
       const isCacheExpired = currentTime - Number(cacheTimestamp) > cacheExpiry;
 
       if (!isCacheExpired) {
         // Use the cached data
         const parsedData = JSON.parse(cachedData);
+        if(!recipeData){
+          setRecipeData(parsedData);
+        }
         setDisplayRecipeData(parsedData);
-        setErrorMsg("");
-
         // console.log("Recipe Data: ", parsedData);
         setLoading(false);
         switchLanguage("en");
@@ -389,7 +392,7 @@ function RecipeSearch({ dbRecipe }) {
         await fetchHtmlContent();
       }
     } else {
-      console.log("Data not found in cache");
+      console.log("Data not found in cache1");
       await fetchHtmlContent();
     }
   };
@@ -403,6 +406,7 @@ function RecipeSearch({ dbRecipe }) {
           const data = await response.text();
           const $ = cheerio.load(data);
           const schemaElements = $('script[type="application/ld+json"]');
+
           const schemaObjects = schemaElements.toArray().map((element) => {
             const schemaText = $(element).html();
             return JSON.parse(schemaText);
@@ -416,7 +420,7 @@ function RecipeSearch({ dbRecipe }) {
             }
           }
 
-          const cleanedObject = cleanupData(recipeObject);
+          // const cleanedObject = cleanupData(recipeObject);
 
           const cleanedRecipeData = await cleanupData(recipeObject);
 
@@ -424,8 +428,6 @@ function RecipeSearch({ dbRecipe }) {
           if (cleanedRecipeData) {
             setRecipeData(cleanedRecipeData);
             setDisplayRecipeData(cleanedRecipeData);
-            setErrorMsg("");
-
             const cacheKey = `recipe_en_${submittedUrl}`;
 
             localStorage.setItem(cacheKey, JSON.stringify(cleanedRecipeData));
@@ -434,21 +436,19 @@ function RecipeSearch({ dbRecipe }) {
             // console.log("saved in cache with id: ", cacheKey);
             switchLanguage("en");
           } else {
-            setErrorMsg("No recipe found!");
+            toast.error("No recipe found!");
           }
 
           setLoading(false);
         } else {
           const errorStatus = response.status;
           const errorMessage = await response.text();
-          setErrorMsg(`${errorStatus} - ${errorMessage}`);
-          // console.log("Error: ", errorMessage);
+          toast.error(`${errorStatus} - ${errorMessage}`);
           setLoading(false);
         }
       } catch (error) {
         setLoading(false);
-
-        setErrorMsg(`${error}`);
+        toast.error(`${error}`);
       }
     }
   };
@@ -456,6 +456,11 @@ function RecipeSearch({ dbRecipe }) {
   const findRecipeObject = (obj) => {
     if (obj && typeof obj === "object") {
       if (obj["@type"] === "Recipe") {
+        return obj;
+      } else if (
+        Array.isArray(obj["@type"]) &&
+        obj["@type"]?.includes("Recipe")
+      ) {
         return obj;
       } else {
         for (const key in obj) {
@@ -465,6 +470,8 @@ function RecipeSearch({ dbRecipe }) {
           }
         }
       }
+    } else if (obj && Array.isArray(obj)) {
+      obj.map((item) => findRecipeObject(item));
     }
     return null;
   };
@@ -576,7 +583,7 @@ function RecipeSearch({ dbRecipe }) {
         <HashLoader color="#36d646" loading={loading} />
       </div>
 
-      <div className="container">
+      <div className="container search-options">
         <div className="accordion recipe-details" id="accordionExample">
           <div className="accordion-item">
             <h2 className="accordion-header">
@@ -597,16 +604,25 @@ function RecipeSearch({ dbRecipe }) {
               data-bs-parent="#accordionExample"
             >
               <div className="accordion-body">
-                <div className="row option-button justify-content-center">
+                <div className="row justify-content-center">
                   {!dbRecipe && displayRecipeData && (
-                    <div className="col-auto option-button">
+                    <div className="col-auto option-button ">
                       <button
                         type="button"
-                        className="btn btn-outline-success"
+                        className="btn btn-outline-danger save-btn"
                         onClick={handleAddRecipe}
                         disabled={firebaseOperationProcessing}
                       >
-                        Add to Favorite
+                        <BsBookmark /> Save
+                      </button>
+
+                      <button
+                        type="button"
+                        className="btn btn-outline-success"
+                        onClick={handlePrintAction}
+                        disabled={firebaseOperationProcessing}
+                      >
+                        Print
                       </button>
                     </div>
                   )}
@@ -681,34 +697,18 @@ function RecipeSearch({ dbRecipe }) {
         </div>
       </div>
 
-      <div className={`container ${language !== "en" ? "devnagari-font" : ""}`}>
-        {errorMsg.length > 0 && (
-          <div
-            className="alert center-alert alert-danger alert-dismissible fade show"
-            role="alert"
-          >
-            <strong>Error!</strong> {errorMsg}
-            <button
-              type="button"
-              className="btn-close"
-              data-bs-dismiss="alert"
-              onClick={() => setErrorMsg("")}
-              aria-label="Close"
-            ></button>
-          </div>
-        )}
-      </div>
-
       {displayRecipeData ? (
         <div
-          className={`container ${language !== "en" ? "devnagari-font" : ""}`}
+          className={`container print-content ${
+            language !== "en" ? "devnagari-font" : ""
+          }`}
         >
           <div className="recipe-box">
             <div className="row align-items-center">
-              <div className="col-lg-3 text-center">
+              <div className="col-sm-3 text-center">
                 <RecipeImage recipe={displayRecipeData} />
               </div>
-              <div className="col-lg-9 text-center">
+              <div className="col-sm-9 text-center">
                 {/* Content for the 2nd column */}
                 <div>
                   <h2
@@ -757,7 +757,7 @@ function RecipeSearch({ dbRecipe }) {
                     </span>
                   </p>
 
-                  <div className="row">
+                  <div className="row row-cols-1">
                     <div className="col-sm-4 d-flex justify-content-center">
                       <div className="recipe-time-box">
                         <label>

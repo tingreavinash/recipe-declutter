@@ -1,5 +1,19 @@
 @import url("https://fonts.googleapis.com/css2?family=Anek+Devanagari&family=Merriweather&family=Roboto+Slab&family=Libre+Baskerville&family=Courgette&display=swap");
 
+@media only screen and (max-width: 1000px) {
+  .navbar {
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+    background-color: #8be3c2cc !important;
+    border-radius: 0.5rem;
+    box-shadow: 1px 5px 5px 0 rgba(108, 135, 135, 0.2);
+    margin: 5px;
+    overflow-y: hidden !important;
+    text-align: center !important;
+    text-transform: capitalize;
+  }
+}
+
 .devnagari-font {
   font-family: "Anek Devanagari", sans-serif !important;
 }
@@ -30,8 +44,8 @@ img {
   color: gray;
 }
 
-.option-button{
-  margin-bottom: 5px
+.option-button {
+  margin-bottom: 5px;
 }
 
 .loader {
@@ -73,22 +87,6 @@ h2 > .recipe-header {
   z-index: 5;
 }
 
-@media only screen and (max-width: 1000px) {
-
-  .navbar{
-    -webkit-backdrop-filter: blur(4px);
-    backdrop-filter: blur(4px);
-    background-color:  #8be3c2cc !important;
-    border-radius: 0.5rem;
-    box-shadow: 1px 5px 5px 0 rgba(108,135,135,.2);
-    margin: 5px;
-    overflow-y: hidden!important;
-    text-align: center!important;
-    text-transform: capitalize;
-  }
-
-}
-
 .recipe-time-box {
   background: rgb(222 255 218 / 0.69);
   padding: 5px 20px;
@@ -104,7 +102,6 @@ h2 > .recipe-header {
   float: left;
   font-weight: bold;
 }
-
 
 .recipe-time-box span {
   color: rgba(80, 136, 74, 0.69);
@@ -148,4 +145,15 @@ ol li:before {
 
 .ingredient-small {
   color: #999;
+}
+
+.save-btn{
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  z-index: 99;
+}
+
+@media print {
+
 }
