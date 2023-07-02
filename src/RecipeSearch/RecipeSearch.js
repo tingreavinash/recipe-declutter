@@ -8,7 +8,7 @@ import LanguageContext from "../LanguageContext/LanguageContext";
 
 import FirebaseUtils from "../FirebaseUtil/FirebaseUtils";
 import { FaArrowRight } from "react-icons/fa6";
-import { BsBookmark, BsFillBookmarkStarFill } from "react-icons/bs";
+import { BsBookmark, BsFillBookmarkStarFill, BsPrinter } from "react-icons/bs";
 
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -26,8 +26,20 @@ function RecipeSearch({ dbRecipe }) {
   useEffect(() => {
     if (dbRecipe) {
       setRecipeData(dbRecipe?.data?.recipeObject);
-      setDisplayRecipeData(dbRecipe?.data?.recipeObject);
-      setSubmittedUrl(dbRecipe?.data?.recipeObject["@id"]);
+      // setDisplayRecipeData(dbRecipe?.data?.recipeObject);
+
+      if (dbRecipe?.data?.recipeObject?.mainEntityOfPage) {
+        let mainEntity = dbRecipe?.data?.recipeObject?.mainEntityOfPage;
+        let recipeUrl;
+        if (typeof mainEntity == "object" && mainEntity["@id"]) {
+          recipeUrl = mainEntity["@id"];
+        } else if (typeof mainEntity == "string") {
+          recipeUrl = mainEntity;
+        }
+        setSubmittedUrl(recipeUrl);
+      } else {
+        console.error("Problem with recipe data.");
+      }
     }
   }, [dbRecipe]);
 
@@ -188,6 +200,10 @@ function RecipeSearch({ dbRecipe }) {
   };
 
   useEffect(() => {
+    setDisplayRecipeData(recipeData);
+  }, [recipeData]);
+
+  useEffect(() => {
     if (recipeData) {
       handleRecipeTranslate();
     }
@@ -195,7 +211,43 @@ function RecipeSearch({ dbRecipe }) {
 
   useEffect(() => {
     console.log("DB Recipe: ", dbRecipe);
-    if (submittedUrl !== "") {
+    const fetchRecipeData = async () => {
+      const cacheKey = `recipe_en_${submittedUrl}`;
+      const cacheExpiry = 60 * 60 * 1000 * 24; // 24 hour (in milliseconds)
+      setLoading(true);
+      // console.log("get from cache with id: ", cacheKey);
+
+      // Check if the cached data exists and is not expired
+      const cachedData = localStorage.getItem(cacheKey);
+      const cacheTimestamp = localStorage.getItem(`${cacheKey}_timestamp`);
+
+      if (cachedData && cacheTimestamp) {
+        const currentTime = new Date().getTime();
+        const isCacheExpired =
+          currentTime - Number(cacheTimestamp) > cacheExpiry;
+
+        if (!isCacheExpired) {
+          // Use the cached data
+          const parsedData = JSON.parse(cachedData);
+          console.log("Cached data: ", parsedData);
+
+          setRecipeData(parsedData);
+          // setDisplayRecipeData(parsedData);
+          // console.log("Recipe Data: ", parsedData);
+          setLoading(false);
+          switchLanguage("en");
+        } else {
+          console.log("Cache data expired");
+          await fetchHtmlContent();
+        }
+      } else {
+        console.log("Data not found in cache1");
+        await fetchHtmlContent();
+      }
+    };
+
+    if (submittedUrl) {
+      console.log("Submitted URL: ", submittedUrl);
       fetchRecipeData();
     }
   }, [submittedUrl]);
@@ -354,51 +406,15 @@ function RecipeSearch({ dbRecipe }) {
   const clearCache = async () => {
     console.warn("Clearing local browser cache!");
     localStorage.clear();
-    setRecipeData("");
-    setDisplayRecipeData("");
+    setRecipeData(null);
   };
 
   const clearBrowserCache = async () => {
     await showToast(clearCache, "Cache cleared!");
   };
 
-  const fetchRecipeData = async () => {
-    const cacheKey = `recipe_en_${submittedUrl}`;
-    const cacheExpiry = 60 * 60 * 1000 * 24; // 24 hour (in milliseconds)
-    setLoading(true);
-    // console.log("get from cache with id: ", cacheKey);
-
-    // Check if the cached data exists and is not expired
-    const cachedData = localStorage.getItem(cacheKey);
-    const cacheTimestamp = localStorage.getItem(`${cacheKey}_timestamp`);
-
-    if (cachedData && cacheTimestamp) {
-
-      const currentTime = new Date().getTime();
-      const isCacheExpired = currentTime - Number(cacheTimestamp) > cacheExpiry;
-
-      if (!isCacheExpired) {
-        // Use the cached data
-        const parsedData = JSON.parse(cachedData);
-        if(!recipeData){
-          setRecipeData(parsedData);
-        }
-        setDisplayRecipeData(parsedData);
-        // console.log("Recipe Data: ", parsedData);
-        setLoading(false);
-        switchLanguage("en");
-      } else {
-        console.log("Cache data expired");
-        await fetchHtmlContent();
-      }
-    } else {
-      console.log("Data not found in cache1");
-      await fetchHtmlContent();
-    }
-  };
-
   const fetchHtmlContent = async () => {
-    if (url.trim() !== "") {
+    if (submittedUrl.trim() !== "") {
       try {
         setLoading(true);
         const response = await fetch(`https://corsproxy.io/?${submittedUrl}`);
@@ -427,7 +443,7 @@ function RecipeSearch({ dbRecipe }) {
           console.log("Cleaned data: ", cleanedRecipeData);
           if (cleanedRecipeData) {
             setRecipeData(cleanedRecipeData);
-            setDisplayRecipeData(cleanedRecipeData);
+            // setDisplayRecipeData(cleanedRecipeData);
             const cacheKey = `recipe_en_${submittedUrl}`;
 
             localStorage.setItem(cacheKey, JSON.stringify(cleanedRecipeData));
@@ -606,7 +622,7 @@ function RecipeSearch({ dbRecipe }) {
               <div className="accordion-body">
                 <div className="row justify-content-center">
                   {!dbRecipe && displayRecipeData && (
-                    <div className="col-auto option-button ">
+                    <div className="col-auto option-button">
                       <button
                         type="button"
                         className="btn btn-outline-danger save-btn"
@@ -615,17 +631,18 @@ function RecipeSearch({ dbRecipe }) {
                       >
                         <BsBookmark /> Save
                       </button>
-
-                      <button
-                        type="button"
-                        className="btn btn-outline-success"
-                        onClick={handlePrintAction}
-                        disabled={firebaseOperationProcessing}
-                      >
-                        Print
-                      </button>
                     </div>
                   )}
+
+                  <div className="col-auto option-button">
+                    <button
+                      type="button"
+                      className="btn btn-outline-success"
+                      onClick={handlePrintAction}
+                      disabled={firebaseOperationProcessing}
+                    ><BsPrinter /> Print
+                    </button>
+                  </div>
 
                   {!dbRecipe && (
                     <div className="col-auto option-button">
@@ -758,7 +775,7 @@ function RecipeSearch({ dbRecipe }) {
                   </p>
 
                   <div className="row row-cols-1">
-                    <div className="col-sm-4 d-flex justify-content-center">
+                    <div className="col-4 col-sm-4 d-flex justify-content-center">
                       <div className="recipe-time-box">
                         <label>
                           <RxLapTimer /> {textLabels.prepTime}
@@ -769,7 +786,7 @@ function RecipeSearch({ dbRecipe }) {
                         </span>
                       </div>
                     </div>
-                    <div className="col-sm-4 d-flex justify-content-center">
+                    <div className="col-4 col-sm-4 d-flex justify-content-center">
                       <div className="recipe-time-box">
                         <label>
                           <RxLapTimer /> {textLabels.cookTime}
@@ -781,7 +798,7 @@ function RecipeSearch({ dbRecipe }) {
                       </div>
                     </div>
 
-                    <div className="col-sm-4 d-flex justify-content-center">
+                    <div className="col-4 col-sm-4 d-flex justify-content-center">
                       <div className="recipe-time-box">
                         <label>
                           <RxLapTimer /> {textLabels.totalTime}

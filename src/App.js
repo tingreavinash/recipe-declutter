@@ -25,6 +25,9 @@ function App() {
       <LanguageProvider>
         <Navbar removeToken={removeToken} />
         <ToastContainer />
+        <div class="brand-print">
+          <p>Recipe Revamp!</p>
+        </div>
         <div className="main-component">
           <Routes>
             <Route path="/" element={<RecipeSearch />} />

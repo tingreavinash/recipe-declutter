@@ -34,14 +34,21 @@ body {
   z-index: 999;
 }
 
+.brand-print{
+    display: none;
+}
+
 @media print {
-  footer, .search-options, .navbar {
+  footer, .search-options, .navbar, .recipe-collection-options {
     display: none !important;
   }
 
-  .main-component {
-    margin-top: auto;
+  .brand-print{
+    display: block;
+    text-align: right;
   }
+
+
 
   #print-content {
 

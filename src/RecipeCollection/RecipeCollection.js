@@ -4,6 +4,7 @@ import "./RecipeCollection.css";
 import { HashLoader } from "react-spinners";
 import RecipeSearch from "../RecipeSearch/RecipeSearch";
 import { TfiReload } from "react-icons/tfi";
+import { AiFillDelete, AiFillEye } from "react-icons/ai";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -221,7 +222,7 @@ function RecipeCollection() {
 
   return (
     <>
-      <div className="container">
+      <div className="container recipe-collection-options">
         {/* <button
         type="button"
         className="btn btn-dark"
@@ -305,8 +306,7 @@ function RecipeCollection() {
                                 data-bs-target="#recipeCollectionAccordion"
                                 aria-expanded="true"
                                 aria-controls="recipeCollectionAccordion"
-                              >
-                                View
+                              ><AiFillEye /> View
                               </button>
                             </div>
                             <div className="col-auto">
@@ -316,8 +316,7 @@ function RecipeCollection() {
                                 onClick={(event) =>
                                   handleDeleteRecipe(recipe?.id, event)
                                 }
-                              >
-                                Delete
+                              ><AiFillDelete /> Delete
                               </button>
                             </div>
                           </div>
