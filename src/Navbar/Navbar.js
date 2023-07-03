@@ -45,7 +45,7 @@ const Navbar = ({removeToken}) => {
             </li>
             <li className="nav-item">
               <Link to="/collection" className="nav-link">
-                Bookmarked Recipes
+                Collection
               </Link>
             </li>
             <li className="nav-item">

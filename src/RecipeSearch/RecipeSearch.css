@@ -23,10 +23,21 @@ body {
 }
 
 img {
-  max-height: 400px;
-  max-width: 400px;
-  height: auto;
-  width: auto;
+  max-height: 90%;
+  max-width: 90%;
+}
+
+.instr-image-container {
+  text-align: center;
+}
+
+.instruction-hr {
+  margin: 5px;
+}
+
+.instruction-image {
+  width: 400px;
+  border-radius: 10px;
 }
 
 .square-image {
@@ -147,7 +158,7 @@ ol li:before {
   color: #999;
 }
 
-.save-btn{
+.save-btn {
   position: fixed;
   bottom: 1rem;
   right: 1rem;
@@ -155,5 +166,4 @@ ol li:before {
 }
 
 @media print {
-
 }

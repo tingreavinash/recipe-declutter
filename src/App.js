@@ -30,10 +30,16 @@ function App() {
         </div>
         <div className="main-component">
           <Routes>
-            <Route path="/" element={<RecipeSearch />} />
+            <Route
+              path="/"
+              element={<RecipeSearch />}
+            />
             <Route path="/about" element={<About />} />
             <Route path="/home" element={<RecipeSearch />} />
-            <Route path="/collection" element={<RecipeCollection />} />
+            <Route
+              path="/collection"
+              element={<RecipeCollection />}
+            />
             <Route path="/signup" element={<SignUp />} />
           </Routes>
         </div>

@@ -265,7 +265,7 @@ function RecipeCollection() {
                 aria-expanded="true"
                 aria-controls="recipeCollectionAccordion"
               >
-                Bookmarked Recipes
+                Collection
               </button>
             </h2>
             <div

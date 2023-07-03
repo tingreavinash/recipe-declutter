@@ -189,7 +189,7 @@ function RecipeSearch({ dbRecipe }) {
     console.log("Before adding data to fav: ", recipeData);
     await showToast(
       FirebaseUtils.addRecipeToCollection(recipeData),
-      "Recipe bookmarked!"
+      "Recipe saved!"
     );
     setFirebaseOperationProcessing(false);
   };
@@ -347,15 +347,26 @@ function RecipeSearch({ dbRecipe }) {
   };
 
   const translateData = async (data, toLang) => {
+    const ignoredKeys = [
+      'url', 'totalTime', 'review', 'image', 'height', 'width',
+      'video', 'duration', 'thumbnailUrl', 'uploadDate', 'publishingPrinciples',
+      'sameAs', 'cookTime', 'prepTime'
+    ];
+
+    const ignoredValues = [
+      'ImageObject', 'Person', 'Recipe', 'NewsArticle', 'Organization', 'AggregateRating',
+      'NutritionInformation', 'HowToStep', 'WebPage', 'BreadcrumbList', 'ListItem', 'VideoObject', 'HowToSection'
+    ];
     const translateNestedData = async (nestedData, toLang) => {
       if (
         typeof nestedData === "string" &&
         !nestedData.startsWith("PT") &&
         !nestedData.startsWith("http")
+        && (!ignoredKeys.includes(nestedData) && !ignoredValues.includes(nestedData))
       ) {
         try {
           const englishString = htmlDecode(nestedData);
-          // console.log("Input string: ", englishString);
+          console.log("Translating string: ", englishString);
           const translated = await translateText(englishString, toLang);
           // console.log("translated string: ", translated);
 
@@ -371,12 +382,17 @@ function RecipeSearch({ dbRecipe }) {
       } else if (typeof nestedData === "object" && nestedData !== null) {
         const translatedObject = {};
         for (const key in nestedData) {
-          if (nestedData.hasOwnProperty(key)) {
-            const translatedValue = await translateNestedData(
-              nestedData[key],
-              toLang
-            );
-            translatedObject[key] = translatedValue;
+          if (nestedData.hasOwnProperty(key) ) {
+            if(ignoredKeys.includes(key) || ignoredValues.includes(nestedData[key])){
+              translatedObject[key] = nestedData[key];
+            }else{
+              const translatedValue = await translateNestedData(
+                nestedData[key],
+                toLang
+              );
+              translatedObject[key] = translatedValue;
+            }
+
           }
         }
         return translatedObject;
@@ -384,8 +400,8 @@ function RecipeSearch({ dbRecipe }) {
       return nestedData;
     };
 
-    const translatedData = JSON.parse(JSON.stringify(data));
-    const translatedResult = await translateNestedData(translatedData, toLang);
+
+    const translatedResult = await translateNestedData(data, toLang);
     setLoading(false);
     return translatedResult;
   };
@@ -492,6 +508,20 @@ function RecipeSearch({ dbRecipe }) {
     return null;
   };
 
+  const renderRecipeImage = (imageAttribute) => {
+    if(Array.isArray(imageAttribute)){
+      console.log("image array: ", imageAttribute);
+      return imageAttribute.map((img, index) => <div key={index}>{renderRecipeImage(img)}</div> );
+    } else if(typeof imageAttribute === "object" && imageAttribute?.url) {
+      console.log("image object: ", imageAttribute);
+      return <img src={imageAttribute?.url} className="instruction-image" alt="Instruction Image" />;
+    } else if(typeof imageAttribute === "string"){
+      console.log("image string: ", imageAttribute);
+      return <img src={imageAttribute} className="instruction-image" alt="Instruction Image" />;
+    }
+
+  }
+
   const RecipeInstructions = ({ instructions }) => (
     <ol>
       {instructions.map((instruction, index) => (
@@ -503,7 +533,11 @@ function RecipeSearch({ dbRecipe }) {
               <RecipeInstructions instructions={instruction.itemListElement} />
             </>
           ) : (
-            <li key={index}>{instruction.text}</li>
+            <li key={index}>
+              <span>{instruction.text}</span>
+              <div className="instr-image-container">{renderRecipeImage(instruction.image)}</div>
+              <hr class="instruction-hr" />
+            </li>
           )}
         </React.Fragment>
       ))}
@@ -625,7 +659,7 @@ function RecipeSearch({ dbRecipe }) {
                     <div className="col-auto option-button">
                       <button
                         type="button"
-                        className="btn btn-outline-danger save-btn"
+                        className="btn btn-danger save-btn"
                         onClick={handleAddRecipe}
                         disabled={firebaseOperationProcessing}
                       >
