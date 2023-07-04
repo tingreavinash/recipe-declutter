@@ -8,7 +8,7 @@ import LanguageContext from "../LanguageContext/LanguageContext";
 
 import FirebaseUtils from "../FirebaseUtil/FirebaseUtils";
 import { FaArrowRight, FaPaste } from "react-icons/fa6";
-import { BsBookmark, BsFillBookmarkStarFill, BsPrinter } from "react-icons/bs";
+import { BsBookmark, BsPrinter } from "react-icons/bs";
 
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -110,7 +110,7 @@ function RecipeSearch({ dbRecipe }) {
     const regex1 = /\(([^()]+)\)/g;
     replacedString = replacedString.replace(
       regex1,
-      "<small className='ingredient-small'>$1</small>"
+      "<small class='ingredient-small'>$1</small>"
     );
     replacedString = replaceTagsWithParentheses(replacedString);
 
@@ -123,7 +123,7 @@ function RecipeSearch({ dbRecipe }) {
       replacedString = inputString.replace("<xx>", "(").replace("</xx>", ")");
     } else {
       replacedString = inputString
-        .replace("<xx>", `<small className='ingredient-small'>`)
+        .replace("<xx>", `<small class='ingredient-small'>`)
         .replace("</xx>", "</small>");
     }
 
@@ -457,6 +457,8 @@ function RecipeSearch({ dbRecipe }) {
     await showToast(clearCache, "Cache cleared!");
   };
 
+  const { microdata } = require("@cucumber/microdata");
+
   const fetchHtmlContent = async () => {
     if (submittedUrl.trim() !== "") {
       try {
@@ -480,11 +482,19 @@ function RecipeSearch({ dbRecipe }) {
             }
           }
 
-          // const cleanedObject = cleanupData(recipeObject);
+          if (!recipeObject) {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(data, "text/html");
+
+            const recipeDoc = microdata("https://schema.org/Recipe", htmlDoc);
+
+            console.log("Recipe: ", recipeDoc);
+            recipeObject = recipeDoc;
+          }
 
           const cleanedRecipeData = await cleanupData(recipeObject);
 
-          // console.log("Cleaned data: ", cleanedRecipeData);
+          console.log("Cleaned data: ", cleanedRecipeData);
           if (cleanedRecipeData) {
             setRecipeData(cleanedRecipeData);
             // setDisplayRecipeData(cleanedRecipeData);
@@ -505,10 +515,12 @@ function RecipeSearch({ dbRecipe }) {
           const errorMessage = await response.text();
           toast.error(`${errorStatus} - ${errorMessage}`);
           setLoading(false);
+          console.error(errorMessage);
         }
       } catch (error) {
         setLoading(false);
         toast.error(`${error}`);
+        console.error(error);
       }
     }
   };
@@ -567,7 +579,9 @@ function RecipeSearch({ dbRecipe }) {
           {instruction.hasOwnProperty("itemListElement") &&
           Array.isArray(instruction.itemListElement) ? (
             <>
-              <h3 className="section-heading">{instruction.name}</h3>
+              <h3 className="section-heading">
+                {instruction.name ? instruction.name : `Part ${index + 1}`}
+              </h3>
               <RecipeInstructions instructions={instruction.itemListElement} />
             </>
           ) : (
@@ -776,9 +790,10 @@ function RecipeSearch({ dbRecipe }) {
                     />
                     <FaPaste
                       className="paste-btn align-self-center"
-                      data-bs-toggle="tooltip" data-bs-placement="top"
-        data-bs-custom-class="custom-tooltip"
-        data-bs-title="This top tooltip is themed via CSS variables."
+                      data-bs-toggle="tooltip"
+                      data-bs-placement="top"
+                      data-bs-custom-class="custom-tooltip"
+                      data-bs-title="This top tooltip is themed via CSS variables."
                       type="button"
                       onClick={handlePasteFromClipboard}
                     />
@@ -817,33 +832,39 @@ function RecipeSearch({ dbRecipe }) {
                       language !== "en" ? "devnagari-font" : ""
                     }`}
                   >
-                    {displayRecipeData?.name}
+                    {Array.isArray(displayRecipeData?.name) &&
+                    displayRecipeData?.name.length > 1
+                      ? displayRecipeData?.name[0]
+                      : displayRecipeData?.name}
                   </h2>
                   <p className="recipe-description">
-                    {displayRecipeData?.description &&
+                    {displayRecipeData?.description?.length <= 400 &&
                       htmlDecode(displayRecipeData?.description)}
                     <br />
-                    <small style={{ fontStyle: "italic" }}>
-                      From:
-                      <a
-                        target="_blank"
-                        rel="noreferrer"
-                        style={{ textDecoration: "none", color: "inherit" }}
-                        href={
-                          typeof displayRecipeData?.mainEntityOfPage ===
+                    {displayRecipeData?.mainEntityOfPage && (
+                      <small style={{ fontStyle: "italic" }}>
+                        From:
+                        <a
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{ textDecoration: "none", color: "inherit" }}
+                          href={
+                            typeof displayRecipeData?.mainEntityOfPage ===
+                            "string"
+                              ? displayRecipeData?.mainEntityOfPage
+                              : displayRecipeData?.mainEntityOfPage?.["@id"]
+                          }
+                        >
+                          {" "}
+                          {typeof displayRecipeData?.mainEntityOfPage ===
                           "string"
-                            ? displayRecipeData?.mainEntityOfPage
-                            : displayRecipeData?.mainEntityOfPage?.["@id"]
-                        }
-                      >
-                        {" "}
-                        {typeof displayRecipeData?.mainEntityOfPage === "string"
-                          ? getDomainName(displayRecipeData?.mainEntityOfPage)
-                          : getDomainName(
-                              displayRecipeData?.mainEntityOfPage?.["@id"]
-                            )}
-                      </a>
-                    </small>
+                            ? getDomainName(displayRecipeData?.mainEntityOfPage)
+                            : getDomainName(
+                                displayRecipeData?.mainEntityOfPage?.["@id"]
+                              )}
+                        </a>
+                      </small>
+                    )}
                   </p>
                   <p style={{ fontSize: "20px" }}>
                     <span
