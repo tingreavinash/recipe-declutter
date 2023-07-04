@@ -7,7 +7,7 @@ import { setCORS } from "google-translate-api-browser";
 import LanguageContext from "../LanguageContext/LanguageContext";
 
 import FirebaseUtils from "../FirebaseUtil/FirebaseUtils";
-import { FaArrowRight } from "react-icons/fa6";
+import { FaArrowRight, FaPaste } from "react-icons/fa6";
 import { BsBookmark, BsFillBookmarkStarFill, BsPrinter } from "react-icons/bs";
 
 import { toast } from "react-toastify";
@@ -42,6 +42,13 @@ function RecipeSearch({ dbRecipe }) {
       }
     }
   }, [dbRecipe]);
+
+  const handlePasteFromClipboard = (event) => {
+    event.preventDefault();
+    navigator.clipboard.readText().then((text) => {
+      setUrl(text);
+    });
+  };
 
   const handlePrintAction = async (event) => {
     event.preventDefault();
@@ -103,7 +110,7 @@ function RecipeSearch({ dbRecipe }) {
     const regex1 = /\(([^()]+)\)/g;
     replacedString = replacedString.replace(
       regex1,
-      "<small class='ingredient-small'>$1</small>"
+      "<small className='ingredient-small'>$1</small>"
     );
     replacedString = replaceTagsWithParentheses(replacedString);
 
@@ -116,7 +123,7 @@ function RecipeSearch({ dbRecipe }) {
       replacedString = inputString.replace("<xx>", "(").replace("</xx>", ")");
     } else {
       replacedString = inputString
-        .replace("<xx>", `<small class='ingredient-small'>`)
+        .replace("<xx>", `<small className='ingredient-small'>`)
         .replace("</xx>", "</small>");
     }
 
@@ -186,7 +193,6 @@ function RecipeSearch({ dbRecipe }) {
   const handleAddRecipe = async (event) => {
     event.preventDefault();
     setFirebaseOperationProcessing(true);
-    console.log("Before adding data to fav: ", recipeData);
     await showToast(
       FirebaseUtils.addRecipeToCollection(recipeData),
       "Recipe saved!"
@@ -210,7 +216,7 @@ function RecipeSearch({ dbRecipe }) {
   }, [language]);
 
   useEffect(() => {
-    console.log("DB Recipe: ", dbRecipe);
+    // console.log("DB Recipe: ", dbRecipe);
     const fetchRecipeData = async () => {
       const cacheKey = `recipe_en_${submittedUrl}`;
       const cacheExpiry = 60 * 60 * 1000 * 24; // 24 hour (in milliseconds)
@@ -229,7 +235,7 @@ function RecipeSearch({ dbRecipe }) {
         if (!isCacheExpired) {
           // Use the cached data
           const parsedData = JSON.parse(cachedData);
-          console.log("Cached data: ", parsedData);
+          // console.log("Cached data: ", parsedData);
 
           setRecipeData(parsedData);
           // setDisplayRecipeData(parsedData);
@@ -247,7 +253,6 @@ function RecipeSearch({ dbRecipe }) {
     };
 
     if (submittedUrl) {
-      console.log("Submitted URL: ", submittedUrl);
       fetchRecipeData();
     }
   }, [submittedUrl]);
@@ -348,25 +353,47 @@ function RecipeSearch({ dbRecipe }) {
 
   const translateData = async (data, toLang) => {
     const ignoredKeys = [
-      'url', 'totalTime', 'review', 'image', 'height', 'width',
-      'video', 'duration', 'thumbnailUrl', 'uploadDate', 'publishingPrinciples',
-      'sameAs', 'cookTime', 'prepTime'
+      "url",
+      "totalTime",
+      "review",
+      "image",
+      "height",
+      "width",
+      "video",
+      "duration",
+      "thumbnailUrl",
+      "uploadDate",
+      "publishingPrinciples",
+      "sameAs",
+      "cookTime",
+      "prepTime",
     ];
 
     const ignoredValues = [
-      'ImageObject', 'Person', 'Recipe', 'NewsArticle', 'Organization', 'AggregateRating',
-      'NutritionInformation', 'HowToStep', 'WebPage', 'BreadcrumbList', 'ListItem', 'VideoObject', 'HowToSection'
+      "ImageObject",
+      "Person",
+      "Recipe",
+      "NewsArticle",
+      "Organization",
+      "AggregateRating",
+      "NutritionInformation",
+      "HowToStep",
+      "WebPage",
+      "BreadcrumbList",
+      "ListItem",
+      "VideoObject",
+      "HowToSection",
     ];
     const translateNestedData = async (nestedData, toLang) => {
       if (
         typeof nestedData === "string" &&
         !nestedData.startsWith("PT") &&
-        !nestedData.startsWith("http")
-        && (!ignoredKeys.includes(nestedData) && !ignoredValues.includes(nestedData))
+        !nestedData.startsWith("http") &&
+        !ignoredKeys.includes(nestedData) &&
+        !ignoredValues.includes(nestedData)
       ) {
         try {
           const englishString = htmlDecode(nestedData);
-          console.log("Translating string: ", englishString);
           const translated = await translateText(englishString, toLang);
           // console.log("translated string: ", translated);
 
@@ -382,24 +409,25 @@ function RecipeSearch({ dbRecipe }) {
       } else if (typeof nestedData === "object" && nestedData !== null) {
         const translatedObject = {};
         for (const key in nestedData) {
-          if (nestedData.hasOwnProperty(key) ) {
-            if(ignoredKeys.includes(key) || ignoredValues.includes(nestedData[key])){
+          if (nestedData.hasOwnProperty(key)) {
+            if (
+              ignoredKeys.includes(key) ||
+              ignoredValues.includes(nestedData[key])
+            ) {
               translatedObject[key] = nestedData[key];
-            }else{
+            } else {
               const translatedValue = await translateNestedData(
                 nestedData[key],
                 toLang
               );
               translatedObject[key] = translatedValue;
             }
-
           }
         }
         return translatedObject;
       }
       return nestedData;
     };
-
 
     const translatedResult = await translateNestedData(data, toLang);
     setLoading(false);
@@ -456,7 +484,7 @@ function RecipeSearch({ dbRecipe }) {
 
           const cleanedRecipeData = await cleanupData(recipeObject);
 
-          console.log("Cleaned data: ", cleanedRecipeData);
+          // console.log("Cleaned data: ", cleanedRecipeData);
           if (cleanedRecipeData) {
             setRecipeData(cleanedRecipeData);
             // setDisplayRecipeData(cleanedRecipeData);
@@ -509,18 +537,28 @@ function RecipeSearch({ dbRecipe }) {
   };
 
   const renderRecipeImage = (imageAttribute) => {
-    if(Array.isArray(imageAttribute)){
-      console.log("image array: ", imageAttribute);
-      return imageAttribute.map((img, index) => <div key={index}>{renderRecipeImage(img)}</div> );
-    } else if(typeof imageAttribute === "object" && imageAttribute?.url) {
-      console.log("image object: ", imageAttribute);
-      return <img src={imageAttribute?.url} className="instruction-image" alt="Instruction Image" />;
-    } else if(typeof imageAttribute === "string"){
-      console.log("image string: ", imageAttribute);
-      return <img src={imageAttribute} className="instruction-image" alt="Instruction Image" />;
+    if (Array.isArray(imageAttribute)) {
+      return imageAttribute.map((img, index) => (
+        <div key={index}>{renderRecipeImage(img)}</div>
+      ));
+    } else if (typeof imageAttribute === "object" && imageAttribute?.url) {
+      return (
+        <img
+          src={imageAttribute?.url}
+          className="instruction-image"
+          alt="Instruction Image"
+        />
+      );
+    } else if (typeof imageAttribute === "string") {
+      return (
+        <img
+          src={imageAttribute}
+          className="instruction-image"
+          alt="Instruction Image"
+        />
+      );
     }
-
-  }
+  };
 
   const RecipeInstructions = ({ instructions }) => (
     <ol>
@@ -535,8 +573,10 @@ function RecipeSearch({ dbRecipe }) {
           ) : (
             <li key={index}>
               <span>{instruction.text}</span>
-              <div className="instr-image-container">{renderRecipeImage(instruction.image)}</div>
-              <hr class="instruction-hr" />
+              <div className="instr-image-container">
+                {renderRecipeImage(instruction.image)}
+              </div>
+              <hr className="instruction-hr" />
             </li>
           )}
         </React.Fragment>
@@ -674,7 +714,8 @@ function RecipeSearch({ dbRecipe }) {
                       className="btn btn-outline-success"
                       onClick={handlePrintAction}
                       disabled={firebaseOperationProcessing}
-                    ><BsPrinter /> Print
+                    >
+                      <BsPrinter /> Print
                     </button>
                   </div>
 
@@ -723,7 +764,7 @@ function RecipeSearch({ dbRecipe }) {
                     <input
                       placeholder="Paste a recipe URL"
                       aria-label="Paste a recipe URL"
-                      className="form-control me-2"
+                      className="form-control search-box"
                       type="text"
                       id="urlInput"
                       value={url}
@@ -733,6 +774,15 @@ function RecipeSearch({ dbRecipe }) {
                       disabled={loading}
                       required
                     />
+                    <FaPaste
+                      className="paste-btn align-self-center"
+                      data-bs-toggle="tooltip" data-bs-placement="top"
+        data-bs-custom-class="custom-tooltip"
+        data-bs-title="This top tooltip is themed via CSS variables."
+                      type="button"
+                      onClick={handlePasteFromClipboard}
+                    />
+
                     <button
                       className="btn btn-outline-success"
                       type="submit"

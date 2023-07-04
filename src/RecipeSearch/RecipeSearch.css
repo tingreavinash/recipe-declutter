@@ -13,6 +13,15 @@
     text-transform: capitalize;
   }
 }
+.search-container {
+  position: relative;
+}
+.paste-btn {
+  margin: 10px;
+}
+
+.search-box {
+}
 
 .devnagari-font {
   font-family: "Anek Devanagari", sans-serif !important;

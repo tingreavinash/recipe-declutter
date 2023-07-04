@@ -3,7 +3,7 @@ import RecipeSearch from "./RecipeSearch/RecipeSearch";
 import { LanguageProvider } from "./LanguageContext/LanguageContext";
 import About from "./About/About";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Navbar from "./Navbar/Navbar";
 import { Routes, Route, BrowserRouter, Switch } from "react-router-dom";
 import RecipeCollection from "./RecipeCollection/RecipeCollection";
@@ -25,7 +25,7 @@ function App() {
       <LanguageProvider>
         <Navbar removeToken={removeToken} />
         <ToastContainer />
-        <div class="brand-print">
+        <div className="brand-print">
           <p>Recipe Revamp!</p>
         </div>
         <div className="main-component">
