@@ -21,12 +21,12 @@ function RecipeSearch({ dbRecipe }) {
   const [loading, setLoading] = useState(false);
   const translate = setCORS("https://corsproxy.io/?");
   const { language, switchLanguage } = useContext(LanguageContext);
+  
   const textLabels = require(`../Assets/${language}.json`); // Load language-specific translations
 
   useEffect(() => {
     if (dbRecipe) {
       setRecipeData(dbRecipe?.data?.recipeObject);
-      // setDisplayRecipeData(dbRecipe?.data?.recipeObject);
 
       if (dbRecipe?.data?.recipeObject?.mainEntityOfPage) {
         let mainEntity = dbRecipe?.data?.recipeObject?.mainEntityOfPage;
@@ -38,7 +38,7 @@ function RecipeSearch({ dbRecipe }) {
         }
         setSubmittedUrl(recipeUrl);
       } else {
-        console.error("Problem with recipe data.");
+        console.warn("mainEntityOfPage missing in recipe");
       }
     }
   }, [dbRecipe]);
@@ -101,7 +101,6 @@ function RecipeSearch({ dbRecipe }) {
     if (matches) {
       // Iterate over each match
       matches.forEach((match) => {
-        // Replace the match with <small> and </small> tags
         const replacement = `<xx>${match.slice(1, -1)}</xx>`;
         replacedString = replacedString.replace(match, replacement);
       });
@@ -126,9 +125,6 @@ function RecipeSearch({ dbRecipe }) {
         .replace("<xx>", `<small class='ingredient-small'>`)
         .replace("</xx>", "</small>");
     }
-
-    //replacedString = replacedString.replace("<small>", "<br/><small>");
-
     return replacedString;
   }
 
@@ -216,12 +212,11 @@ function RecipeSearch({ dbRecipe }) {
   }, [language]);
 
   useEffect(() => {
-    // console.log("DB Recipe: ", dbRecipe);
+    console.log("DB Recipe: ", dbRecipe);
     const fetchRecipeData = async () => {
       const cacheKey = `recipe_en_${submittedUrl}`;
       const cacheExpiry = 60 * 60 * 1000 * 24; // 24 hour (in milliseconds)
       setLoading(true);
-      // console.log("get from cache with id: ", cacheKey);
 
       // Check if the cached data exists and is not expired
       const cachedData = localStorage.getItem(cacheKey);
@@ -513,14 +508,16 @@ function RecipeSearch({ dbRecipe }) {
         } else {
           const errorStatus = response.status;
           const errorMessage = await response.text();
-          toast.error(`${errorStatus} - ${errorMessage}`);
-          setLoading(false);
           console.error(errorMessage);
+
+          toast.error("No recipe found!");
+          setLoading(false);
         }
       } catch (error) {
         setLoading(false);
-        toast.error(`${error}`);
         console.error(error);
+
+        toast.error("No recipe found!");
       }
     }
   };
@@ -604,7 +601,8 @@ function RecipeSearch({ dbRecipe }) {
     const matches = time?.match(isoRegex);
 
     if (!matches) {
-      return "Invalid ISO 8601 time format";
+      console.warn("Invalid ISO 8601 time format");
+      return "--";
     }
 
     const hours = parseInt(matches[1]) || 0;
@@ -615,7 +613,7 @@ function RecipeSearch({ dbRecipe }) {
     let result = "";
 
     if (hours > 0) {
-      result += `${hours} hour${hours > 1 ? "s" : ""}`;
+      result += `${hours} hr${hours > 1 ? "s" : ""}`;
     }
 
     if (minutesLower > 0) {
@@ -625,23 +623,23 @@ function RecipeSearch({ dbRecipe }) {
 
       if (minutesLower < 60) {
         if (minutesUpper > minutesLower) {
-          result += `${minutesLower}-${minutesUpper} minute${
+          result += `${minutesLower}-${minutesUpper} min${
             minutesUpper > 1 ? "s" : ""
           }`;
         } else {
-          result += `${minutesLower} minute${minutesLower > 1 ? "s" : ""}`;
+          result += `${minutesLower} min${minutesLower > 1 ? "s" : ""}`;
         }
       } else {
         const remainingMinutes = minutesLower % 60;
         const hoursFromMinutes = Math.floor(minutesLower / 60);
-        result += `${hoursFromMinutes} hour${
+        result += `${hoursFromMinutes} hr${
           hoursFromMinutes > 1 ? "s" : ""
-        } ${remainingMinutes} minute${remainingMinutes > 1 ? "s" : ""}`;
+        } ${remainingMinutes} min${remainingMinutes > 1 ? "s" : ""}`;
       }
     }
 
     if (result === "") {
-      result += `${seconds} second${seconds > 1 ? "s" : ""}`;
+      result += `${seconds} sec${seconds > 1 ? "s" : ""}`;
     }
 
     return result;

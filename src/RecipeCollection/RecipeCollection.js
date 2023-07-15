@@ -23,8 +23,11 @@ function RecipeCollection() {
 
   function sortObjectsByName(objects) {
     return objects.sort((a, b) => {
-      const nameA = a.data.recipeObject.name.toLowerCase();
-      const nameB = b.data.recipeObject.name.toLowerCase();
+      const derivedRecipeNameForA = Array.isArray(a.data.recipeObject.name) ? a.data.recipeObject.name[0] : a.data.recipeObject.name;
+      const derivedRecipeNameForB = Array.isArray(b.data.recipeObject.name) ? b.data.recipeObject.name[0] : b.data.recipeObject.name;
+
+      const nameA = derivedRecipeNameForA.toLowerCase();
+      const nameB = derivedRecipeNameForB.toLowerCase();
 
       if (nameA < nameB) {
         return -1;
@@ -287,7 +290,11 @@ function RecipeCollection() {
                           aria-expanded="false"
                           aria-controls={`collapseItem${index}`}
                         >
-                          {recipe?.data?.recipeObject?.name}
+                          {Array.isArray(recipe?.data?.recipeObject?.name) &&
+                    recipe?.data?.recipeObject?.name.length > 1
+                      ? recipe?.data?.recipeObject?.name[0]
+                      : recipe?.data?.recipeObject?.name}
+                          
                         </button>
                       </h2>
                       <div

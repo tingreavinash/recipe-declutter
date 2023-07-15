@@ -12,6 +12,7 @@ import Footer from "./Footer/Footer";
 import Login from "./Login/Login";
 import SignUp from "./SignUp/SignUp";
 import useToken from './useToken';
+import NotFound from "./NotFound/NotFound";
 
 function App() {
   const { token, setToken, removeToken } = useToken();
@@ -41,6 +42,7 @@ function App() {
               element={<RecipeCollection />}
             />
             <Route path="/signup" element={<SignUp />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
 
