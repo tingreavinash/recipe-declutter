@@ -9,22 +9,28 @@ import {
   query,
   where,
 } from "@firebase/firestore";
+import { FirebaseError } from "@firebase/util";
 
 import {
   signInWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
-  createUserWithEmailAndPassword
+  createUserWithEmailAndPassword,
 } from "firebase/auth";
+import App from "../App";
+import CommonUtils from "../CommonUtils/CommonUtils";
 
 class FirebaseUtils {
   static generateDocId(recipeData) {
     let sanitizedId = null;
-    const regex=/[^a-zA-Z0-9]/g;
+    const regex = /[^a-zA-Z0-9]/g;
     if (recipeData?.mainEntityOfPage) {
-      if(typeof recipeData?.mainEntityOfPage == 'object' &&  recipeData?.mainEntityOfPage["@id"]){
+      if (
+        typeof recipeData?.mainEntityOfPage == "object" &&
+        recipeData?.mainEntityOfPage["@id"]
+      ) {
         sanitizedId = recipeData?.mainEntityOfPage["@id"]?.replace(regex, "_");
-      } else if (typeof recipeData?.mainEntityOfPage == 'string'){
+      } else if (typeof recipeData?.mainEntityOfPage == "string") {
         sanitizedId = recipeData?.mainEntityOfPage?.replace(regex, "_");
       }
     } else if (recipeData["@id"]) {
@@ -44,15 +50,22 @@ class FirebaseUtils {
     try {
       const recipeId = this.generateDocId(recipeData);
 
-      await setDoc(doc(firestore, "users", auth.currentUser.uid, "favorites", recipeId), {
-        updatedOn: Date.now(),
-        recipeObject: recipeData,
-      });
+      await setDoc(
+        doc(firestore, "users", auth.currentUser.uid, "favorites", recipeId),
+        {
+          updatedOn: Date.now(),
+          recipeObject: recipeData,
+        }
+      );
 
       console.log("Recipe added to collection.");
     } catch (err) {
-      console.log(err);
-      alert(err);
+      if (err instanceof FirebaseError) {
+        console.error(err);
+        CommonUtils.showErrorToast(err.message);
+      } else {
+        console.log(err);
+      }
     }
   }
 
@@ -60,18 +73,33 @@ class FirebaseUtils {
     const favRecipesRef = collection(firestore, "favRecipes"); // Firebase creates this automatically
     try {
       // console.log("recipeid: ", recipeId);
-      await deleteDoc(doc(firestore, "users", auth.currentUser.uid, "favorites", recipeId));
+      await deleteDoc(
+        doc(firestore, "users", auth.currentUser.uid, "favorites", recipeId)
+      );
       console.log("Recipe removed from collection.");
     } catch (err) {
-      console.log(err);
+      if (err instanceof FirebaseError) {
+        console.error(err);
+        CommonUtils.showErrorToast(err.message);
+      } else {
+        console.log(err);
+      }
       throw err;
     }
   }
 
   static async getAllRecipes() {
-    const favRecipesRef = collection(firestore, "favRecipes","user", auth.currentUser.uid); // Firebase creates this automatically
+    const favRecipesRef = collection(
+      firestore,
+      "favRecipes",
+      "user",
+      auth.currentUser.uid
+    ); // Firebase creates this automatically
     try {
-      const favoritesRef = collection(doc(firestore, "users", auth.currentUser.uid), "favorites");
+      const favoritesRef = collection(
+        doc(firestore, "users", auth.currentUser.uid),
+        "favorites"
+      );
       const allRecipes = await getDocs(favoritesRef);
       const result = [];
 
@@ -83,19 +111,24 @@ class FirebaseUtils {
 
       return result;
     } catch (err) {
-      console.log(err);
+      if (err instanceof FirebaseError) {
+        console.error(err);
+        CommonUtils.showErrorToast(err.message);
+      } else {
+        console.log(err);
+      }
       throw err;
     }
   }
 
   static createAccountWithEmailAndPass = async (credentials) => {
-    try{
+    try {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         credentials.email,
         credentials.password
       );
-  
+
       // Signed in
       const user = userCredential.user;
       const q = query(
@@ -111,12 +144,16 @@ class FirebaseUtils {
           email: user.email,
         });
       }
-      alert("Account created");
-    }catch (err){
-      console.log(err);
-      alert(err.message);
+      // alert("Account created");
+      CommonUtils.showSuccessToast("Account created!");
+    } catch (err) {
+      if (err instanceof FirebaseError) {
+        console.error(err);
+        CommonUtils.showErrorToast(err.message);
+      } else {
+        console.log(err);
+      }
     }
-    
   };
 
   static loginWithEmailAndPassword = async (credentials) => {
@@ -146,8 +183,12 @@ class FirebaseUtils {
       const token = { token: user?.accessToken };
       return token;
     } catch (err) {
-      console.error(err);
-      alert(err.message);
+      if (err instanceof FirebaseError) {
+        console.error(err);
+        CommonUtils.showErrorToast(err.message);
+      } else {
+        console.log(err);
+      }
       return null;
     }
   };
@@ -165,7 +206,7 @@ class FirebaseUtils {
       );
       const docs = await getDocs(q);
       if (docs.docs.length === 0) {
-        await setDoc( doc(firestore, "users", user.uid), {
+        await setDoc(doc(firestore, "users", user.uid), {
           uid: user.uid,
           name: user.displayName,
           authProvider: "google",
@@ -177,8 +218,12 @@ class FirebaseUtils {
       const token = { token: user?.accessToken };
       return token;
     } catch (err) {
-      console.error(err);
-      alert(err.message);
+      if (err instanceof FirebaseError) {
+        console.error(err);
+        CommonUtils.showErrorToast(err.message);
+      } else {
+        console.log(err);
+      }
       return null;
     }
   };

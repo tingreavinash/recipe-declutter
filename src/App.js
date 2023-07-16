@@ -3,40 +3,36 @@ import RecipeSearch from "./RecipeSearch/RecipeSearch";
 import { LanguageProvider } from "./LanguageContext/LanguageContext";
 import About from "./About/About";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import Navbar from "./Navbar/Navbar";
-import { Routes, Route, BrowserRouter, Switch } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import RecipeCollection from "./RecipeCollection/RecipeCollection";
 import { ToastContainer } from "react-toastify";
 import Footer from "./Footer/Footer";
-import Login from "./Login/Login";
 import SignUp from "./SignUp/SignUp";
-import useToken from './useToken';
+import useToken from "./useToken";
 import NotFound from "./NotFound/NotFound";
 
 function App() {
   const { token, setToken, removeToken } = useToken();
 
-  if (!token) {
-    return <Login setToken={setToken} />;
-  }
 
   return (
     <>
       <LanguageProvider>
-        <Navbar removeToken={removeToken} />
+        <Navbar removeToken={removeToken} token={token} setToken={setToken} />
         <ToastContainer />
         <div className="brand-print">
           <p>Recipe Revamp!</p>
         </div>
         <div className="main-component">
           <Routes>
+
+            <Route path="/" element={<About />} />
             <Route
-              path="/"
-              element={<RecipeSearch />}
+              path="/recipe-search"
+              element={<RecipeSearch token={token} setToken={setToken} />}
             />
-            <Route path="/about" element={<About />} />
-            <Route path="/home" element={<RecipeSearch />} />
             <Route path="/collection" element={<RecipeCollection />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="*" element={<NotFound />} />

@@ -12,8 +12,14 @@ import { BsBookmark, BsPrinter } from "react-icons/bs";
 
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import useToken from "../useToken";
+import Login from "../Login/Login";
+import { useNavigate } from 'react-router-dom';
+import CommonUtils from "../CommonUtils/CommonUtils";
 
-function RecipeSearch({ dbRecipe }) {
+function RecipeSearch({ dbRecipe, token, setToken }) {
+  const [showLogin, setShowLogin] = useState(false);
+
   const [url, setUrl] = useState("");
   const [submittedUrl, setSubmittedUrl] = useState("");
   const [recipeData, setRecipeData] = useState("");
@@ -23,6 +29,23 @@ function RecipeSearch({ dbRecipe }) {
   const { language, switchLanguage } = useContext(LanguageContext);
   
   const textLabels = require(`../Assets/${language}.json`); // Load language-specific translations
+
+
+  const handleAddRecipe = (event) => {
+    event.preventDefault();
+    if(token){
+      setFirebaseOperationProcessing(true);
+      CommonUtils.showToast(
+        FirebaseUtils.addRecipeToCollection(recipeData),
+        "Recipe saved!"
+      );
+      setFirebaseOperationProcessing(false);
+      
+    } else {
+      console.log("returning login page")
+      setShowLogin(true);
+    }
+  };
 
   useEffect(() => {
     if (dbRecipe) {
@@ -131,70 +154,7 @@ function RecipeSearch({ dbRecipe }) {
   const [firebaseOperationProcessing, setFirebaseOperationProcessing] =
     useState(false);
 
-  const showToast = async (promiseFunc, toastMessage) => {
-    const toastProperties = {
-      position: "bottom-right",
-      autoClose: 3000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-      theme: "light",
-    };
-
-    return await toast.promise(promiseFunc, {
-      pending: {
-        render() {
-          return "Please wait";
-        },
-        position: toastProperties.position,
-        autoClose: toastProperties.autoClose,
-        hideProgressBar: toastProperties.hideProgressBar,
-        closeOnClick: toastProperties.closeOnClick,
-        pauseOnHover: toastProperties.pauseOnHover,
-        draggable: toastProperties.draggable,
-        progress: toastProperties.progress,
-        theme: toastProperties.theme,
-      },
-      success: {
-        render() {
-          return toastMessage;
-        },
-        position: toastProperties.position,
-        autoClose: toastProperties.autoClose,
-        hideProgressBar: toastProperties.hideProgressBar,
-        closeOnClick: toastProperties.closeOnClick,
-        pauseOnHover: toastProperties.pauseOnHover,
-        draggable: toastProperties.draggable,
-        progress: toastProperties.progress,
-        theme: toastProperties.theme,
-      },
-      error: {
-        render() {
-          return "Failed";
-        },
-        position: toastProperties.position,
-        autoClose: toastProperties.autoClose,
-        hideProgressBar: toastProperties.hideProgressBar,
-        closeOnClick: toastProperties.closeOnClick,
-        pauseOnHover: toastProperties.pauseOnHover,
-        draggable: toastProperties.draggable,
-        progress: toastProperties.progress,
-        theme: toastProperties.theme,
-      },
-    });
-  };
-
-  const handleAddRecipe = async (event) => {
-    event.preventDefault();
-    setFirebaseOperationProcessing(true);
-    await showToast(
-      FirebaseUtils.addRecipeToCollection(recipeData),
-      "Recipe saved!"
-    );
-    setFirebaseOperationProcessing(false);
-  };
+  
 
   const handleFormSubmit = async (event) => {
     event.preventDefault();
@@ -270,7 +230,6 @@ function RecipeSearch({ dbRecipe }) {
     };
 
     const setCacheData = (data) => {
-      // console.log("translated data saved with cache id: ", cacheKey);
       localStorage.setItem(cacheKey, JSON.stringify(data));
       localStorage.setItem(`${cacheKey}_timestamp`, new Date().getTime());
     };
@@ -449,7 +408,7 @@ function RecipeSearch({ dbRecipe }) {
   };
 
   const clearBrowserCache = async () => {
-    await showToast(clearCache, "Cache cleared!");
+    await CommonUtils.showToast(clearCache, "Cache cleared!");
   };
 
   const { microdata } = require("@cucumber/microdata");
@@ -492,13 +451,11 @@ function RecipeSearch({ dbRecipe }) {
           console.log("Cleaned data: ", cleanedRecipeData);
           if (cleanedRecipeData) {
             setRecipeData(cleanedRecipeData);
-            // setDisplayRecipeData(cleanedRecipeData);
             const cacheKey = `recipe_en_${submittedUrl}`;
 
             localStorage.setItem(cacheKey, JSON.stringify(cleanedRecipeData));
             localStorage.setItem(`${cacheKey}_timestamp`, new Date().getTime());
 
-            // console.log("saved in cache with id: ", cacheKey);
             switchLanguage("en");
           } else {
             toast.error("No recipe found!");
@@ -681,6 +638,7 @@ function RecipeSearch({ dbRecipe }) {
 
   return (
     <div>
+      { (showLogin && !token) && <Login setToken={setToken} showLogin={showLogin} setShowLogin={setShowLogin} />}
       <div className="loader">
         <HashLoader color="#36d646" loading={loading} />
       </div>
@@ -731,7 +689,7 @@ function RecipeSearch({ dbRecipe }) {
                     </button>
                   </div>
 
-                  {!dbRecipe && (
+                  {/* {!dbRecipe && (
                     <div className="col-auto option-button">
                       <button
                         type="button"
@@ -742,7 +700,7 @@ function RecipeSearch({ dbRecipe }) {
                         Clear Cache
                       </button>
                     </div>
-                  )}
+                  )} */}
 
                   <div className="col-auto option-button">
                     <label

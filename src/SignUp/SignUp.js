@@ -63,13 +63,10 @@ function SignUp({ setAccountCreation }) {
         <button type="submit" className="btn btn-primary">
           Submit
         </button>
-        <button
-          type="button"
-          onClick={handleLoginOption}
-          className="btn btn-primary"
-        >
-          Already have account ?
-        </button>
+        <p>Already have account?
+                      <a style={{cursor: 'pointer', color: 'blue'}} onClick={handleLoginOption}> Login</a>
+                      </p>
+        
       </form>
     </div>
   );

@@ -5,8 +5,9 @@ import { HashLoader } from "react-spinners";
 import RecipeSearch from "../RecipeSearch/RecipeSearch";
 import { TfiReload } from "react-icons/tfi";
 import { AiFillDelete, AiFillEye } from "react-icons/ai";
-import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import App from "../App";
+import CommonUtils from "../CommonUtils/CommonUtils";
 
 function RecipeCollection() {
   const [dbRecipes, setDbRecipes] = useState([]);
@@ -56,65 +57,12 @@ function RecipeCollection() {
     }
   }, [selectedRecipeId]);
 
-  const showToast = async (promiseFunc, toastMessage) => {
-    const toastProperties = {
-      position: "bottom-right",
-      autoClose: 3000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-      theme: "light",
-    };
-
-    return await toast.promise(promiseFunc, {
-      pending: {
-        render() {
-          return "Please wait";
-        },
-        position: toastProperties.position,
-        autoClose: toastProperties.autoClose,
-        hideProgressBar: toastProperties.hideProgressBar,
-        closeOnClick: toastProperties.closeOnClick,
-        pauseOnHover: toastProperties.pauseOnHover,
-        draggable: toastProperties.draggable,
-        progress: toastProperties.progress,
-        theme: toastProperties.theme,
-      },
-      success: {
-        render() {
-          return toastMessage;
-        },
-        position: toastProperties.position,
-        autoClose: toastProperties.autoClose,
-        hideProgressBar: toastProperties.hideProgressBar,
-        closeOnClick: toastProperties.closeOnClick,
-        pauseOnHover: toastProperties.pauseOnHover,
-        draggable: toastProperties.draggable,
-        progress: toastProperties.progress,
-        theme: toastProperties.theme,
-      },
-      error: {
-        render() {
-          return "Failed";
-        },
-        position: toastProperties.position,
-        autoClose: toastProperties.autoClose,
-        hideProgressBar: toastProperties.hideProgressBar,
-        closeOnClick: toastProperties.closeOnClick,
-        pauseOnHover: toastProperties.pauseOnHover,
-        draggable: toastProperties.draggable,
-        progress: toastProperties.progress,
-        theme: toastProperties.theme,
-      },
-    });
-  };
+  
 
   const handleDeleteRecipe = async (recipeId, event) => {
     event.preventDefault();
 
-    await showToast(
+    await CommonUtils.showToast(
       FirebaseUtils.deleteRecipeFromCollection(recipeId),
       "Removed from collection!"
     );
@@ -142,7 +90,7 @@ function RecipeCollection() {
 
   const refreshCacheData = async (event) => {
     event.preventDefault();
-    await showToast(getAllRecipes(), "Data refreshed!");
+    await CommonUtils.showToast(getAllRecipes(), "Data refreshed!");
   };
 
   const cacheKey = `db_recipes_all`;
