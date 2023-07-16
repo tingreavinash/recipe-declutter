@@ -48,14 +48,11 @@ function RecipeCollection() {
   };
 
   useEffect(() => {
-    // console.log("Selected recipe: ", selectedRecipeId);
     const foundRecipe = dbRecipes.find((obj) => obj.id === selectedRecipeId);
 
     if (foundRecipe) {
       setDisplayRecipe(foundRecipe);
-      // console.log("Found recipe",foundRecipe);
     } else {
-      // console.log("Object not found");
     }
   }, [selectedRecipeId]);
 

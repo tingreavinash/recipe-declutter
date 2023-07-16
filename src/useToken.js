@@ -7,8 +7,6 @@ export default function useToken() {
     return userToken?.token;
   };
 
-
-
   const [token, setToken] = useState(getToken());
 
   const saveToken = (userToken) => {

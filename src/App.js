@@ -37,10 +37,7 @@ function App() {
             />
             <Route path="/about" element={<About />} />
             <Route path="/home" element={<RecipeSearch />} />
-            <Route
-              path="/collection"
-              element={<RecipeCollection />}
-            />
+            <Route path="/collection" element={<RecipeCollection />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
