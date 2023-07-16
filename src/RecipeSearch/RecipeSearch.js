@@ -12,9 +12,7 @@ import { BsBookmark, BsPrinter } from "react-icons/bs";
 
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import useToken from "../useToken";
 import Login from "../Login/Login";
-import { useNavigate } from 'react-router-dom';
 import CommonUtils from "../CommonUtils/CommonUtils";
 
 function RecipeSearch({ dbRecipe, token, setToken }) {
@@ -42,7 +40,6 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
       setFirebaseOperationProcessing(false);
       
     } else {
-      console.log("returning login page")
       setShowLogin(true);
     }
   };
@@ -158,7 +155,13 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
 
   const handleFormSubmit = async (event) => {
     event.preventDefault();
-    setSubmittedUrl(url);
+    let isValidUrl = CommonUtils.validateUrl(url);
+    if (isValidUrl){
+      setSubmittedUrl(url);
+    } else {
+      CommonUtils.showWarnToast("Please provide valid URL.")
+    }
+    
   };
 
   useEffect(() => {
@@ -172,7 +175,7 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
   }, [language]);
 
   useEffect(() => {
-    console.log("DB Recipe: ", dbRecipe);
+    // console.log("DB Recipe: ", dbRecipe);
     const fetchRecipeData = async () => {
       const cacheKey = `recipe_en_${submittedUrl}`;
       const cacheExpiry = 60 * 60 * 1000 * 24; // 24 hour (in milliseconds)
@@ -442,13 +445,13 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
 
             const recipeDoc = microdata("https://schema.org/Recipe", htmlDoc);
 
-            console.log("Recipe: ", recipeDoc);
+            // console.log("Recipe: ", recipeDoc);
             recipeObject = recipeDoc;
           }
 
           const cleanedRecipeData = await cleanupData(recipeObject);
 
-          console.log("Cleaned data: ", cleanedRecipeData);
+          // console.log("Cleaned data: ", cleanedRecipeData);
           if (cleanedRecipeData) {
             setRecipeData(cleanedRecipeData);
             const cacheKey = `recipe_en_${submittedUrl}`;
