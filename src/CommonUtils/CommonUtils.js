@@ -6,16 +6,12 @@ class CommonUtils {
     let recipeThumbnailUrl;
     const recipeImageField = recipe.image;
 
-    console.log("type of image field: ", typeof recipeThumbnailUrl)
 
     if (typeof recipeImageField === "string") {
       recipeThumbnailUrl = recipeImageField;
     } else if (Array.isArray(recipeImageField)) {
-      console.log("Recipe array for image: ", recipeImageField);
 
       if (typeof recipeImageField[0] === "string") {
-        console.log("image: ", recipeImageField[0]);
-
         recipeThumbnailUrl = recipeImageField[0];
       }
 
@@ -25,7 +21,6 @@ class CommonUtils {
     } else if (typeof recipeImageField === "object" && recipeImageField.url) {
       recipeThumbnailUrl = recipeImageField.url;
     }
-    console.log("Return value: ", recipeThumbnailUrl)
 
     return recipeThumbnailUrl;
   }

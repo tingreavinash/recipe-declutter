@@ -457,7 +457,7 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
 
           const cleanedRecipeData = await cleanupData(recipeObject);
 
-          console.log("Cleaned data: ", cleanedRecipeData);
+          // console.log("Cleaned data: ", cleanedRecipeData);
           if (cleanedRecipeData) {
             setRecipeData(cleanedRecipeData);
             const cacheKey = `recipe_en_${submittedUrl}`;
