@@ -5,11 +5,11 @@ import { useNavigate } from "react-router-dom";
 function About() {
   const navigate = useNavigate();
 
-  const handleProceedAction = async (e) =>{
+  const handleProceedAction = async (e) => {
     e.preventDefault();
 
-    navigate("/recipe-search")
-  }
+    navigate("/recipe-search");
+  };
   return (
     <div className="container">
       <h1>
@@ -35,7 +35,6 @@ function About() {
             type="button"
             className="btn btn-success"
             onClick={handleProceedAction}
-            
           >
             Proceed
           </button>

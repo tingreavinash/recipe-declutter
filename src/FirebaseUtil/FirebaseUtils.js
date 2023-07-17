@@ -139,7 +139,8 @@ class FirebaseUtils {
       if (docs.docs.length === 0) {
         await setDoc(doc(firestore, "users", user.uid), {
           uid: user.uid,
-          name: user.displayName,
+          firstname: credentials.firstname,
+          lastname: credentials.lastname,
           authProvider: "emailPassword",
           email: user.email,
         });

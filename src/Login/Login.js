@@ -1,28 +1,44 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import "./Login.css";
 import SignUp from "../SignUp/SignUp";
-import { Link, NavLink, useNavigate } from "react-router-dom";
 
 import FirebaseUtils from "../FirebaseUtil/FirebaseUtils";
-import App from "../App";
 import CommonUtils from "../CommonUtils/CommonUtils";
+import { FcGoogle } from "react-icons/fc";
 
 function Login({ setToken, showLogin, setShowLogin }) {
   const [username, setUserName] = useState();
   const [password, setPassword] = useState();
   const [accountCreation, setAccountCreation] = useState(false);
-  const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+  useEffect(() => {
+    let timer;
+
+    if (showPassword) {
+      timer = setTimeout(() => {
+        setShowPassword(false);
+      }, 2000);
+    }
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [showPassword]);
 
   const handleSignInWithGoogle = async (e) => {
     e.preventDefault();
     const token = await FirebaseUtils.signInWithGoogle();
-    if(token){
+    if (token) {
       setToken(token);
-      setShowLogin(false);  
+      setShowLogin(false);
       CommonUtils.showSuccessToast("Welcome back!");
     }
-
   };
 
   const handleAccountCreate = async (e) => {
@@ -37,11 +53,10 @@ function Login({ setToken, showLogin, setShowLogin }) {
       password,
     });
 
-    if(token){
+    if (token) {
       setToken(token);
       setShowLogin(false);
       CommonUtils.showSuccessToast("Welcome back!");
-
     }
   };
 
@@ -67,7 +82,7 @@ function Login({ setToken, showLogin, setShowLogin }) {
             <div className="modal-content">
               <div className="modal-header">
                 <h1 className="modal-title fs-5" id="exampleModalLabel">
-                  Authenticate
+                  {accountCreation ? "Register" : "Sign In"}
                 </h1>
                 <button
                   type="button"
@@ -107,29 +122,48 @@ function Login({ setToken, showLogin, setShowLogin }) {
                         >
                           Password
                         </label>
-                        <input
-                          type="password"
-                          className="form-control"
-                          id="exampleInputPassword1"
-                          onChange={(e) => setPassword(e.target.value)}
-                        />
+                        <div className="password-container">
+                          <input
+                            type={showPassword ? "text" : "password"}
+                            value={password}
+                            className="form-control"
+                            id="exampleInputPassword1"
+                            onChange={(e) => setPassword(e.target.value)}
+                          />
+                          <span
+                            className="toggle-password"
+                            onClick={togglePasswordVisibility}
+                          >
+                            {showPassword ? "🙈" : "👁️"}
+                          </span>
+                        </div>
                       </div>
-
-                      <button type="submit" className="btn btn-sm btn-primary">
-                        Login
-                      </button>
-                      <p>Don't have account?
-                      <a style={{cursor: 'pointer', color: 'blue'}} onClick={handleAccountCreate}> Create new account</a>
-                      </p>
-                      
+                      <div className="form-actions">
+                        <button
+                          type="submit"
+                          className="btn btn-outline-success"
+                        >
+                          Submit
+                        </button>
+                        <p>
+                          Don't have account?
+                          <a
+                            style={{ cursor: "pointer", color: "blue" }}
+                            onClick={handleAccountCreate}
+                          >
+                            {" "}
+                            Create new account
+                          </a>
+                        </p>
+                        <button
+                          type="button"
+                          onClick={handleSignInWithGoogle}
+                          className="btn btn-outline-dark"
+                        >
+                          SignIn with <FcGoogle />
+                        </button>
+                      </div>
                     </form>
-                    <button
-                      type="button"
-                      onClick={handleSignInWithGoogle}
-                      className="btn btn-sm btn-warning"
-                    >
-                      SignIn with Google
-                    </button>
                   </>
                 )}
               </div>
@@ -141,7 +175,6 @@ function Login({ setToken, showLogin, setShowLogin }) {
                 >
                   Close
                 </button>
-
               </div>
             </div>
           </div>
@@ -150,11 +183,7 @@ function Login({ setToken, showLogin, setShowLogin }) {
     );
   };
 
-  return (
-    <div className="container">
-      {renderLoginForm()}
-    </div>
-  );
+  return <div className="container">{renderLoginForm()}</div>;
 }
 
 Login.propTypes = {

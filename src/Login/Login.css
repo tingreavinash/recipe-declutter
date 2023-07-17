@@ -1,0 +1,22 @@
+.form-actions {
+  text-align: center;
+}
+
+.password-container {
+  position: relative;
+}
+
+.toggle-password {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  cursor: pointer;
+  background-repeat: no-repeat;
+  width: 20px;
+  height: 20px;
+}
+
+input[type="password"] {
+  padding-right: 30px;
+}

@@ -35,7 +35,12 @@ const Navbar = ({ removeToken, token, setToken }) => {
       <nav className="navbar fixed-top navbar-expand-lg bg-body-tertiary">
         <div className="container-fluid">
           <Link to="/" className="navbar-brand">
-          <img src={process.env.PUBLIC_URL + 'favicon.png'} alt="Brand" width="30" /> Recipe Revamp
+            <img
+              src={process.env.PUBLIC_URL + "favicon.png"}
+              alt="Logo"
+              width="30"
+            />{" "}
+            Recipe Revamp
           </Link>
           <button
             className="navbar-toggler"
@@ -69,7 +74,6 @@ const Navbar = ({ removeToken, token, setToken }) => {
                   Collection
                 </Link>
               </li>
-
 
               {token && (
                 <li className="nav-item">
