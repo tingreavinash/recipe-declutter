@@ -451,7 +451,7 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
 
           const cleanedRecipeData = await cleanupData(recipeObject);
 
-          // console.log("Cleaned data: ", cleanedRecipeData);
+          console.log("Cleaned data: ", cleanedRecipeData);
           if (cleanedRecipeData) {
             setRecipeData(cleanedRecipeData);
             const cacheKey = `recipe_en_${submittedUrl}`;
@@ -506,6 +506,7 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
   };
 
   const renderRecipeImage = (imageAttribute) => {
+    console.log('imageAttribute:', imageAttribute);
     if (Array.isArray(imageAttribute)) {
       return imageAttribute.map((img, index) => (
         <div key={index}>{renderRecipeImage(img)}</div>
@@ -610,7 +611,7 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
 
     if (recipe?.image) {
       if (Array.isArray(recipe.image)) {
-        displayImage = recipe.image[0];
+        displayImage = recipe.image[0]?.url;
       } else if (typeof recipe.image === "object") {
         displayImage = recipe.image.url || "";
       } else if (typeof recipe.image === "string") {
