@@ -27,7 +27,14 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
   const { language, switchLanguage } = useContext(LanguageContext);
   
   const textLabels = require(`../Assets/${language}.json`); // Load language-specific translations
+  const [recipeThumbnail, setRecipeThumbnail]  = useState("https://placehold.co/200x200");
 
+  useEffect(() => {
+    const derivedThumbnail = CommonUtils.getImageUrl(displayRecipeData);
+    if(derivedThumbnail){
+      setRecipeThumbnail(derivedThumbnail);
+    }
+  }, [displayRecipeData]);
 
   const handleAddRecipe = (event) => {
     event.preventDefault();
@@ -196,7 +203,6 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
           // console.log("Cached data: ", parsedData);
 
           setRecipeData(parsedData);
-          // setDisplayRecipeData(parsedData);
           // console.log("Recipe Data: ", parsedData);
           setLoading(false);
           switchLanguage("en");
@@ -506,7 +512,6 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
   };
 
   const renderRecipeImage = (imageAttribute) => {
-    console.log('imageAttribute:', imageAttribute);
     if (Array.isArray(imageAttribute)) {
       return imageAttribute.map((img, index) => (
         <div key={index}>{renderRecipeImage(img)}</div>
@@ -604,26 +609,6 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
     }
 
     return result;
-  };
-
-  const RecipeImage = ({ recipe }) => {
-    let displayImage = "";
-
-    if (recipe?.image) {
-      if (Array.isArray(recipe.image)) {
-        displayImage = recipe.image[0]?.url;
-      } else if (typeof recipe.image === "object") {
-        displayImage = recipe.image.url || "";
-      } else if (typeof recipe.image === "string") {
-        displayImage = recipe.image;
-      }
-    }
-
-    return (
-      displayImage && (
-        <img src={displayImage} className="square-image" alt="Recipe" />
-      )
-    );
   };
 
   const htmlDecode = (str) => {
@@ -782,7 +767,8 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
           <div className="recipe-box">
             <div className="row align-items-center">
               <div className="col-sm-3 text-center">
-                <RecipeImage recipe={displayRecipeData} />
+
+                <img src={recipeThumbnail} className="square-image" alt="Recipe" />
               </div>
               <div className="col-sm-9 text-center">
                 {/* Content for the 2nd column */}
