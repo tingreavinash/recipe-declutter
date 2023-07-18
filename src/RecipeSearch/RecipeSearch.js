@@ -78,7 +78,6 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
     event.preventDefault();
     navigator.clipboard.readText().then((text) => {
       setState({ ...state, url: text });
-
     });
   };
 
@@ -122,7 +121,6 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
   const handleLanguageChange = (event) => {
     const selectedLanguage = event.target.value;
     setState({ ...state, language: selectedLanguage });
-
   };
 
   function replaceOuterParenthesesWithTags(inputString) {
@@ -172,7 +170,6 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
     console.log("is url value? :" + isValidUrl);
     if (isValidUrl){
       setState({ ...state, submittedUrl: state.url });
-
     } else {
       CommonUtils.showWarnToast("Please provide valid URL.")
     }
@@ -206,13 +203,11 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
         if (!isCacheExpired) {
           // Use the cached data
           const parsedData = JSON.parse(cachedData);
-          // console.log("Cached data: ", parsedData);
+          console.log("Cached data: ", parsedData);
 
-          setState({ ...state, recipeData: parsedData });
-
-          // console.log("Recipe Data: ", parsedData);
+          setState({ ...state, recipeData: parsedData, language: 'en' });
+          console.log("Recipe Data: ", parsedData);
           setLoading(false);
-          setState({ ...state, language: 'en' });
 
         } else {
           console.log("Cache data expired");
@@ -256,7 +251,6 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
       const { cachedData } = getCachedData();
       const parsedData = JSON.parse(cachedData);
       setState({ ...state, displayRecipeData: parsedData });
-
       setLoading(false);
     };
 
@@ -270,7 +264,6 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
 
       } else if (state.recipeData) {
         // console.log("Language is not english and recipeData is present");
-
         const newRecipeData = await translateData(state.recipeData, state.language);
         setCacheData(newRecipeData);
         setState({ ...state, displayRecipeData: newRecipeData });
