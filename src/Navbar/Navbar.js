@@ -66,6 +66,11 @@ const Navbar = ({ removeToken, token, setToken }) => {
                 </Link>
               </li>
               <li className="nav-item">
+                <Link to="/recipe-search" className="nav-link">
+                  Declutter
+                </Link>
+              </li>
+              <li className="nav-item">
                 <Link
                   onClick={handleCollectionView}
                   to="/collection"

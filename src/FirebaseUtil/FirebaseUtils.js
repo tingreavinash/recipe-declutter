@@ -1,4 +1,6 @@
 import { firestore, auth } from "./FirebaseConfig";
+import ReactGA4 from 'react-ga4';
+
 import {
   doc,
   setDoc,
@@ -17,7 +19,6 @@ import {
   signInWithPopup,
   createUserWithEmailAndPassword,
 } from "firebase/auth";
-import App from "../App";
 import CommonUtils from "../CommonUtils/CommonUtils";
 
 class FirebaseUtils {
@@ -59,6 +60,13 @@ class FirebaseUtils {
       );
 
       console.log("Recipe added to collection.");
+      ReactGA4.event({
+        category: 'User',
+        action: 'Button Click',
+        label: 'Save Recipe',
+      });
+      localStorage.removeItem("db_recipes_all");
+
     } catch (err) {
       if (err instanceof FirebaseError) {
         console.error(err);
@@ -77,6 +85,11 @@ class FirebaseUtils {
         doc(firestore, "users", auth.currentUser.uid, "favorites", recipeId)
       );
       console.log("Recipe removed from collection.");
+      ReactGA4.event({
+        category: 'User',
+        action: 'Button Click',
+        label: 'Delete Recipe',
+      });
     } catch (err) {
       if (err instanceof FirebaseError) {
         console.error(err);
@@ -108,7 +121,11 @@ class FirebaseUtils {
         result.push({ id: recipe.id, data: recipe.data() });
       });
       console.log("Fetched all recipes.");
-
+      ReactGA4.event({
+        category: 'User',
+        action: 'Button Click',
+        label: 'Fetch All Recipes',
+      });
       return result;
     } catch (err) {
       if (err instanceof FirebaseError) {
@@ -147,6 +164,13 @@ class FirebaseUtils {
       }
       // alert("Account created");
       CommonUtils.showSuccessToast("Account created!");
+      if(user?.uid){
+        ReactGA4.event({
+          category: 'User',
+          action: 'Authentication',
+          label: 'Account Created',
+        });
+      }
     } catch (err) {
       if (err instanceof FirebaseError) {
         console.error(err);
@@ -182,6 +206,13 @@ class FirebaseUtils {
       }
 
       const token = { token: user?.accessToken };
+      if(user?.uid){
+        ReactGA4.initialize(process.env.REACT_APP_measurementId, {
+          gaOptions: {
+            userId: user.uid,
+          },
+        });
+      }
       return token;
     } catch (err) {
       if (err instanceof FirebaseError) {
@@ -217,6 +248,13 @@ class FirebaseUtils {
 
       // Signed in
       const token = { token: user?.accessToken };
+      if(user?.uid){
+        ReactGA4.initialize(process.env.REACT_APP_measurementId, {
+          gaOptions: {
+            userId: user.uid,
+          },
+        });  
+      }
       return token;
     } catch (err) {
       if (err instanceof FirebaseError) {

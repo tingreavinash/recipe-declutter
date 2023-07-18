@@ -4,7 +4,7 @@ import "./RecipeSearch.css";
 import { RxLapTimer } from "react-icons/rx";
 import { HashLoader } from "react-spinners";
 import { setCORS } from "google-translate-api-browser";
-import LanguageContext from "../LanguageContext/LanguageContext";
+import AppStateContext from "../AppStateContext/AppStateContext";
 
 import FirebaseUtils from "../FirebaseUtil/FirebaseUtils";
 import { FaArrowRight, FaPaste } from "react-icons/fa6";
@@ -18,30 +18,32 @@ import CommonUtils from "../CommonUtils/CommonUtils";
 function RecipeSearch({ dbRecipe, token, setToken }) {
   const [showLogin, setShowLogin] = useState(false);
 
-  const [url, setUrl] = useState("");
-  const [submittedUrl, setSubmittedUrl] = useState("");
-  const [recipeData, setRecipeData] = useState("");
-  const [displayRecipeData, setDisplayRecipeData] = useState("");
+
   const [loading, setLoading] = useState(false);
   const translate = setCORS("https://corsproxy.io/?");
-  const { language, switchLanguage } = useContext(LanguageContext);
+  const {state, setState} = useContext(AppStateContext);
   
-  const textLabels = require(`../Assets/${language}.json`); // Load language-specific translations
+  
+  const textLabels = require(`../Assets/${state.language}.json`); // Load language-specific translations
   const [recipeThumbnail, setRecipeThumbnail]  = useState("https://placehold.co/200x200");
 
   useEffect(() => {
-    const derivedThumbnail = CommonUtils.getImageUrl(displayRecipeData);
+    const derivedThumbnail = CommonUtils.getImageUrl(state.displayRecipeData);
     if(derivedThumbnail){
       setRecipeThumbnail(derivedThumbnail);
     }
-  }, [displayRecipeData]);
+  }, [state.displayRecipeData]);
+
+  useEffect(() => {
+    setState({...state, displayRecipeData: state.recipeData});
+  }, [state.recipeData]);
 
   const handleAddRecipe = (event) => {
     event.preventDefault();
     if(token){
       setFirebaseOperationProcessing(true);
       CommonUtils.showToast(
-        FirebaseUtils.addRecipeToCollection(recipeData),
+        FirebaseUtils.addRecipeToCollection(state.recipeData),
         "Recipe saved!"
       );
       setFirebaseOperationProcessing(false);
@@ -52,8 +54,9 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
   };
 
   useEffect(() => {
+    console.log("Test, Recipe: ", dbRecipe);
     if (dbRecipe) {
-      setRecipeData(dbRecipe?.data?.recipeObject);
+      setState({ ...state, recipeData: dbRecipe?.data?.recipeObject });
 
       if (dbRecipe?.data?.recipeObject?.mainEntityOfPage) {
         let mainEntity = dbRecipe?.data?.recipeObject?.mainEntityOfPage;
@@ -63,7 +66,8 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
         } else if (typeof mainEntity == "string") {
           recipeUrl = mainEntity;
         }
-        setSubmittedUrl(recipeUrl);
+        setState({ ...state, submittedUrl: recipeUrl });
+
       } else {
         console.warn("mainEntityOfPage missing in recipe");
       }
@@ -73,7 +77,8 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
   const handlePasteFromClipboard = (event) => {
     event.preventDefault();
     navigator.clipboard.readText().then((text) => {
-      setUrl(text);
+      setState({ ...state, url: text });
+
     });
   };
 
@@ -112,10 +117,12 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
     return checkedItems.includes(index);
   };
 
+
+
   const handleLanguageChange = (event) => {
     const selectedLanguage = event.target.value;
-    switchLanguage(selectedLanguage);
-    console.log("Selected language: ", selectedLanguage);
+    setState({ ...state, language: selectedLanguage });
+
   };
 
   function replaceOuterParenthesesWithTags(inputString) {
@@ -158,33 +165,32 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
   const [firebaseOperationProcessing, setFirebaseOperationProcessing] =
     useState(false);
 
-  
 
   const handleFormSubmit = async (event) => {
     event.preventDefault();
-    let isValidUrl = CommonUtils.validateUrl(url);
+    let isValidUrl = CommonUtils.validateUrl(state.url);
+    console.log("is url value? :" + isValidUrl);
     if (isValidUrl){
-      setSubmittedUrl(url);
+      setState({ ...state, submittedUrl: state.url });
+
     } else {
       CommonUtils.showWarnToast("Please provide valid URL.")
     }
     
   };
 
-  useEffect(() => {
-    setDisplayRecipeData(recipeData);
-  }, [recipeData]);
+  
 
   useEffect(() => {
-    if (recipeData) {
+    if (state.recipeData) {
       handleRecipeTranslate();
     }
-  }, [language]);
+  }, [state.language]);
 
   useEffect(() => {
     // console.log("DB Recipe: ", dbRecipe);
     const fetchRecipeData = async () => {
-      const cacheKey = `recipe_en_${submittedUrl}`;
+      const cacheKey = `recipe_en_${state.submittedUrl}`;
       const cacheExpiry = 60 * 60 * 1000 * 24; // 24 hour (in milliseconds)
       setLoading(true);
 
@@ -202,10 +208,12 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
           const parsedData = JSON.parse(cachedData);
           // console.log("Cached data: ", parsedData);
 
-          setRecipeData(parsedData);
+          setState({ ...state, recipeData: parsedData });
+
           // console.log("Recipe Data: ", parsedData);
           setLoading(false);
-          switchLanguage("en");
+          setState({ ...state, language: 'en' });
+
         } else {
           console.log("Cache data expired");
           await fetchHtmlContent();
@@ -216,13 +224,14 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
       }
     };
 
-    if (submittedUrl) {
+    if (state.submittedUrl) {
+      console.log("Test, submitted url: {}", state.submittedUrl);
       fetchRecipeData();
     }
-  }, [submittedUrl]);
+  }, [state.submittedUrl]);
 
   const handleRecipeTranslate = async () => {
-    const cacheKey = `recipe_${language}_${submittedUrl}`;
+    const cacheKey = `recipe_${state.language}_${state.submittedUrl}`;
     const cacheExpiry = 60 * 60 * 1000 * 24; // 24 hour (in milliseconds)
 
     const getCachedData = () => {
@@ -246,23 +255,26 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
     const handleCacheHit = () => {
       const { cachedData } = getCachedData();
       const parsedData = JSON.parse(cachedData);
-      setDisplayRecipeData(parsedData);
+      setState({ ...state, displayRecipeData: parsedData });
+
       setLoading(false);
     };
 
     const handleCacheMiss = async () => {
       console.log("Data not found in cache");
 
-      if (language === "en" && recipeData) {
+      if (state.language === "en" && state.recipeData) {
         // console.log("Language is english");
-        setCacheData(recipeData);
-        setDisplayRecipeData(recipeData);
-      } else if (recipeData) {
+        setCacheData(state.recipeData);
+        setState({ ...state, displayRecipeData: state.recipeData });
+
+      } else if (state.recipeData) {
         // console.log("Language is not english and recipeData is present");
 
-        const newRecipeData = await translateData(recipeData, language);
+        const newRecipeData = await translateData(state.recipeData, state.language);
         setCacheData(newRecipeData);
-        setDisplayRecipeData(newRecipeData);
+        setState({ ...state, displayRecipeData: newRecipeData });
+
       }
 
       setLoading(false);
@@ -398,7 +410,7 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
   };
 
   const handleUrlChange = (event) => {
-    setUrl(event.target.value);
+    setState({ ...state, url: event.target.value });
   };
 
   const translateText = async (text, toLang) => {
@@ -410,23 +422,15 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
     }
   };
 
-  const clearCache = async () => {
-    console.warn("Clearing local browser cache!");
-    localStorage.clear();
-    setRecipeData(null);
-  };
 
-  const clearBrowserCache = async () => {
-    await CommonUtils.showToast(clearCache, "Cache cleared!");
-  };
 
   const { microdata } = require("@cucumber/microdata");
 
   const fetchHtmlContent = async () => {
-    if (submittedUrl.trim() !== "") {
+    if (state.submittedUrl.trim() !== "") {
       try {
         setLoading(true);
-        const response = await fetch(`https://corsproxy.io/?${submittedUrl}`);
+        const response = await fetch(`https://corsproxy.io/?${state.submittedUrl}`);
         if (response.ok) {
           const data = await response.text();
           const $ = cheerio.load(data);
@@ -451,7 +455,7 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
 
             const recipeDoc = microdata("https://schema.org/Recipe", htmlDoc);
 
-            // console.log("Recipe: ", recipeDoc);
+            console.log("Recipe: ", recipeDoc);
             recipeObject = recipeDoc;
           }
 
@@ -459,20 +463,24 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
 
           // console.log("Cleaned data: ", cleanedRecipeData);
           if (cleanedRecipeData) {
-            setRecipeData(cleanedRecipeData);
-            const cacheKey = `recipe_en_${submittedUrl}`;
+            setState(prevState => ({
+              ...prevState,
+              recipeData: cleanedRecipeData,
+              language: 'en'
+            }));
+            
+            console.log("Recipe data updated");
+            const cacheKey = `recipe_en_${state.submittedUrl}`;
 
             localStorage.setItem(cacheKey, JSON.stringify(cleanedRecipeData));
             localStorage.setItem(`${cacheKey}_timestamp`, new Date().getTime());
 
-            switchLanguage("en");
           } else {
             toast.error("No recipe found!");
           }
 
           setLoading(false);
         } else {
-          const errorStatus = response.status;
           const errorMessage = await response.text();
           console.error(errorMessage);
 
@@ -521,7 +529,7 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
         <img
           src={imageAttribute?.url}
           className="instruction-image"
-          alt="Instruction Image"
+          alt="Instruction Step"
         />
       );
     } else if (typeof imageAttribute === "string") {
@@ -529,7 +537,7 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
         <img
           src={imageAttribute}
           className="instruction-image"
-          alt="Instruction Image"
+          alt="Instruction Step"
         />
       );
     }
@@ -654,7 +662,7 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
             >
               <div className="accordion-body">
                 <div className="row justify-content-center">
-                  {!dbRecipe && displayRecipeData && (
+                  {!dbRecipe && state.displayRecipeData && (
                     <div className="col-auto option-button">
                       <button
                         type="button"
@@ -701,7 +709,7 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
                     <select
                       className="form-select"
                       id="autoSizingSelect"
-                      value={language}
+                      value={state.language}
                       onChange={handleLanguageChange}
                       disabled={loading}
                     >
@@ -726,7 +734,7 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
                       className="form-control search-box"
                       type="text"
                       id="urlInput"
-                      value={url}
+                      value={state.url}
                       onChange={handleUrlChange}
                       autoComplete="on"
                       autoCorrect="on"
@@ -758,10 +766,10 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
         </div>
       </div>
 
-      {displayRecipeData ? (
+      {state.displayRecipeData ? (
         <div
           className={`container print-content ${
-            language !== "en" ? "devnagari-font" : ""
+            state.language !== "en" ? "devnagari-font" : ""
           }`}
         >
           <div className="recipe-box">
@@ -775,19 +783,19 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
                 <div>
                   <h2
                     className={`'recipe-header' ${
-                      language !== "en" ? "devnagari-font" : ""
+                      state.language !== "en" ? "devnagari-font" : ""
                     }`}
                   >
-                    {Array.isArray(displayRecipeData?.name) &&
-                    displayRecipeData?.name.length > 1
-                      ? displayRecipeData?.name[0]
-                      : displayRecipeData?.name}
+                    {Array.isArray(state.displayRecipeData?.name) &&
+                    state.displayRecipeData?.name.length > 1
+                      ? state.displayRecipeData?.name[0]
+                      : state.displayRecipeData?.name}
                   </h2>
                   <p className="recipe-description">
-                    {displayRecipeData?.description?.length <= 400 &&
-                      htmlDecode(displayRecipeData?.description)}
+                    {state.displayRecipeData?.description?.length <= 400 &&
+                      htmlDecode(state.displayRecipeData?.description)}
                     <br />
-                    {displayRecipeData?.mainEntityOfPage && (
+                    {state.displayRecipeData?.mainEntityOfPage && (
                       <small style={{ fontStyle: "italic" }}>
                         From:
                         <a
@@ -795,18 +803,18 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
                           rel="noreferrer"
                           style={{ textDecoration: "none", color: "inherit" }}
                           href={
-                            typeof displayRecipeData?.mainEntityOfPage ===
+                            typeof state.displayRecipeData?.mainEntityOfPage ===
                             "string"
-                              ? displayRecipeData?.mainEntityOfPage
-                              : displayRecipeData?.mainEntityOfPage?.["@id"]
+                              ? state.displayRecipeData?.mainEntityOfPage
+                              : state.displayRecipeData?.mainEntityOfPage?.["@id"]
                           }
                         >
                           {" "}
-                          {typeof displayRecipeData?.mainEntityOfPage ===
+                          {typeof state.displayRecipeData?.mainEntityOfPage ===
                           "string"
-                            ? getDomainName(displayRecipeData?.mainEntityOfPage)
+                            ? getDomainName(state.displayRecipeData?.mainEntityOfPage)
                             : getDomainName(
-                                displayRecipeData?.mainEntityOfPage?.["@id"]
+                                state.displayRecipeData?.mainEntityOfPage?.["@id"]
                               )}
                         </a>
                       </small>
@@ -815,12 +823,12 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
                   <p style={{ fontSize: "20px" }}>
                     <span
                       className={`badge text-bg-light ${
-                        language !== "en" ? "devnagari-font" : ""
+                        state.language !== "en" ? "devnagari-font" : ""
                       }`}
                     >
-                      {Array.isArray(displayRecipeData?.recipeYield)
-                        ? displayRecipeData.recipeYield[0]
-                        : displayRecipeData?.recipeYield}{" "}
+                      {Array.isArray(state.displayRecipeData?.recipeYield)
+                        ? state.displayRecipeData.recipeYield[0]
+                        : state.displayRecipeData?.recipeYield}{" "}
                       {textLabels.servings}
                     </span>
                   </p>
@@ -832,8 +840,8 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
                           <RxLapTimer /> {textLabels.prepTime}
                         </label>
                         <span>
-                          {displayRecipeData?.prepTime &&
-                            convertISO8601Time(displayRecipeData?.prepTime)}
+                          {state.displayRecipeData?.prepTime &&
+                            convertISO8601Time(state.displayRecipeData?.prepTime)}
                         </span>
                       </div>
                     </div>
@@ -843,8 +851,8 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
                           <RxLapTimer /> {textLabels.cookTime}
                         </label>
                         <span>
-                          {displayRecipeData?.cookTime &&
-                            convertISO8601Time(displayRecipeData?.cookTime)}
+                          {state.displayRecipeData?.cookTime &&
+                            convertISO8601Time(state.displayRecipeData?.cookTime)}
                         </span>
                       </div>
                     </div>
@@ -855,8 +863,8 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
                           <RxLapTimer /> {textLabels.totalTime}
                         </label>
                         <span>
-                          {displayRecipeData?.totalTime &&
-                            convertISO8601Time(displayRecipeData?.totalTime)}
+                          {state.displayRecipeData?.totalTime &&
+                            convertISO8601Time(state.displayRecipeData?.totalTime)}
                         </span>
                       </div>
                     </div>
@@ -869,14 +877,14 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
               <div className="col-md-4" style={{ marginTop: "10px" }}>
                 <h2
                   className={`'recipe-header' ${
-                    language !== "en" ? "devnagari-font" : ""
+                    state.language !== "en" ? "devnagari-font" : ""
                   }`}
                 >
                   {textLabels.ingredients}
                 </h2>
                 <div className="recipe-ingredients">
                   <ul className="">
-                    {displayRecipeData?.recipeIngredient?.map(
+                    {state.displayRecipeData?.recipeIngredient?.map(
                       (ingredient, index) => (
                         <div className="form-check">
                           <input
@@ -921,15 +929,15 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
               <div className="col-md-8" style={{ marginTop: "10px" }}>
                 <h2
                   className={`'recipe-header' ${
-                    language !== "en" ? "devnagari-font" : ""
+                    state.language !== "en" ? "devnagari-font" : ""
                   }`}
                 >
                   {textLabels.directions}
                 </h2>
                 <div className="recipe-instructions">
-                  {displayRecipeData?.recipeInstructions && (
+                  {state.displayRecipeData?.recipeInstructions && (
                     <RecipeInstructions
-                      instructions={displayRecipeData.recipeInstructions}
+                      instructions={state.displayRecipeData.recipeInstructions}
                     />
                   )}
                 </div>

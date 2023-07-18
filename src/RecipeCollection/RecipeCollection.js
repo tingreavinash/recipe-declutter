@@ -184,7 +184,7 @@ function RecipeCollection() {
           <HashLoader color="#36d646" loading={loading} />
         </div>
 
-        <div className="container">
+        {/* <div className="container">
           <div
             className="row justify-content-center"
             style={{ marginBottom: "10px" }}
@@ -200,7 +200,7 @@ function RecipeCollection() {
               </button>
             </div>
           </div>
-        </div>
+        </div> */}
 
         <div className="accordion recipe-details" id="accordionExample">
           <div className="accordion-item">
@@ -213,7 +213,7 @@ function RecipeCollection() {
                 aria-expanded="true"
                 aria-controls="recipeCollectionAccordion"
               >
-                Collection
+                Saved Recipes
               </button>
             </h2>
             <div

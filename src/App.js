@@ -1,9 +1,10 @@
 import "./App.css";
+import ReactGA4 from 'react-ga4';
 import RecipeSearch from "./RecipeSearch/RecipeSearch";
-import { LanguageProvider } from "./LanguageContext/LanguageContext";
+import { AppStateProvider } from "./AppStateContext/AppStateContext";
 import About from "./About/About";
 
-import React from "react";
+import React, {useEffect} from "react";
 import Navbar from "./Navbar/Navbar";
 import { Routes, Route } from "react-router-dom";
 import RecipeCollection from "./RecipeCollection/RecipeCollection";
@@ -16,10 +17,15 @@ import NotFound from "./NotFound/NotFound";
 function App() {
   const { token, setToken, removeToken } = useToken();
 
+  useEffect(() => {
+    if(!token){
+      ReactGA4.initialize(process.env.REACT_APP_measurementId);
+    }
+  }, [token]);
 
   return (
     <>
-      <LanguageProvider>
+      <AppStateProvider>
         <Navbar removeToken={removeToken} token={token} setToken={setToken} />
         <ToastContainer />
         <div className="brand-print">
@@ -40,7 +46,7 @@ function App() {
         </div>
 
         <Footer />
-      </LanguageProvider>
+      </AppStateProvider>
     </>
   );
 }
