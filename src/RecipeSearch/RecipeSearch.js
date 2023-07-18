@@ -17,13 +17,9 @@ import CommonUtils from "../CommonUtils/CommonUtils";
 
 function RecipeSearch({ dbRecipe, token, setToken }) {
   const [showLogin, setShowLogin] = useState(false);
-
-
   const [loading, setLoading] = useState(false);
   const translate = setCORS("https://corsproxy.io/?");
   const {state, setState} = useContext(AppStateContext);
-  
-  
   const textLabels = require(`../Assets/${state.language}.json`); // Load language-specific translations
   const [recipeThumbnail, setRecipeThumbnail]  = useState("https://placehold.co/200x200");
 
@@ -47,7 +43,6 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
         "Recipe saved!"
       );
       setFirebaseOperationProcessing(false);
-      
     } else {
       setShowLogin(true);
     }
