@@ -14,43 +14,48 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Login from "../Login/Login";
 import CommonUtils from "../CommonUtils/CommonUtils";
+import { useLocation, useParams } from "react-router-dom";
 
 function RecipeSearch({ dbRecipe, token, setToken }) {
   const [showLogin, setShowLogin] = useState(false);
   const [loading, setLoading] = useState(false);
-  const translate = setCORS("https://corsproxy.io/?");
-  const {state, setState} = useContext(AppStateContext);
+  const translate = setCORS("https://api.allorigins.win/raw?url=");
+  const { state, setState } = useContext(AppStateContext);
   const textLabels = require(`../Assets/${state.language}.json`); // Load language-specific translations
-  const [recipeThumbnail, setRecipeThumbnail]  = useState("https://placehold.co/200x200");
+  const [recipeThumbnail, setRecipeThumbnail] = useState(
+    "https://placehold.co/200x200"
+  );
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const recipeUrl = queryParams.get('url'); // Get the value of the 'url' query parameter
 
   useEffect(() => {
-    const derivedThumbnail = CommonUtils.getImageUrl(state.displayRecipeData);
-    if(derivedThumbnail){
-      setRecipeThumbnail(derivedThumbnail);
+    console.log("Query param: ", recipeUrl);
+    if (recipeUrl) {
+      let isValidUrl = CommonUtils.validateUrl(recipeUrl);
+      console.log("is url valid? " + isValidUrl);
+      if (isValidUrl) {
+        setState({ ...state, submittedUrl: recipeUrl});
+        
+      } else {
+        CommonUtils.showWarnToast("Please provide valid URL.");
+      }
     }
-  }, [state.displayRecipeData]);
+  }, [recipeUrl]);
 
   useEffect(() => {
-    setState({...state, displayRecipeData: state.recipeData});
-  }, [state.recipeData]);
+    // console.log("DB Recipe: ", dbRecipe);
+    console.log("Submitted URL: ", state.submittedUrl);
 
-  const handleAddRecipe = (event) => {
-    event.preventDefault();
-    if(token){
-      setFirebaseOperationProcessing(true);
-      CommonUtils.showToast(
-        FirebaseUtils.addRecipeToCollection(state.recipeData),
-        "Recipe saved!"
-      );
-      setFirebaseOperationProcessing(false);
-    } else {
-      setShowLogin(true);
+    if (state.submittedUrl) {
+      console.log("Test, submitted url: {}", state.submittedUrl);
+      fetchRecipeData();
     }
-  };
-
+  }, [state.submittedUrl]);
+  
   useEffect(() => {
-    console.log("Test, Recipe: ", dbRecipe);
     if (dbRecipe) {
+      console.log("Test, Recipe: ", dbRecipe);
       setState({ ...state, recipeData: dbRecipe?.data?.recipeObject });
 
       if (dbRecipe?.data?.recipeObject?.mainEntityOfPage) {
@@ -62,12 +67,56 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
           recipeUrl = mainEntity;
         }
         setState({ ...state, submittedUrl: recipeUrl });
-
       } else {
         console.warn("mainEntityOfPage missing in recipe");
       }
     }
   }, [dbRecipe]);
+
+  useEffect(() => {
+    const derivedThumbnail = CommonUtils.getImageUrl(state.displayRecipeData);
+    if (derivedThumbnail) {
+      setRecipeThumbnail(derivedThumbnail);
+    }
+  }, [state.displayRecipeData]);
+
+  function parseIngredients(ingredientsList) {
+    console.log("Input List: ", ingredientsList);
+    return ingredientsList.map((ingredient) => {
+      // Use regular expressions to split the ingredient into parts
+      console.log("Ingredient: ", ingredient);
+      const parts = ingredient.match(/([\d./]+)\s*([\w\s]+)$/);
+
+      // Extract quantity, unit, and name
+      const quantity = parts[1];
+      const name = parts[2];
+
+      return {
+        quantity,
+        unit: "", // You can further parse the unit if needed
+        name,
+      };
+    });
+  }
+
+  useEffect(() => {
+    setState({ ...state, displayRecipeData: state.recipeData });
+  }, [state.recipeData]);
+
+  const handleAddRecipe = (event) => {
+    event.preventDefault();
+    if (token) {
+      setFirebaseOperationProcessing(true);
+      CommonUtils.showToast(
+        FirebaseUtils.addRecipeToCollection(state.recipeData),
+        "Recipe saved!"
+      );
+      setFirebaseOperationProcessing(false);
+    } else {
+      setShowLogin(true);
+    }
+  };
+
 
   const handlePasteFromClipboard = (event) => {
     event.preventDefault();
@@ -110,8 +159,6 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
   const isChecked = (index) => {
     return checkedItems.includes(index);
   };
-
-
 
   const handleLanguageChange = (event) => {
     const selectedLanguage = event.target.value;
@@ -158,20 +205,16 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
   const [firebaseOperationProcessing, setFirebaseOperationProcessing] =
     useState(false);
 
-
   const handleFormSubmit = async (event) => {
     event.preventDefault();
     let isValidUrl = CommonUtils.validateUrl(state.url);
-    console.log("is url value? :" + isValidUrl);
-    if (isValidUrl){
+    console.log("is url valid1? :" + isValidUrl);
+    if (isValidUrl) {
       setState({ ...state, submittedUrl: state.url });
     } else {
-      CommonUtils.showWarnToast("Please provide valid URL.")
+      CommonUtils.showWarnToast("Please provide valid URL.");
     }
-    
   };
-
-  
 
   useEffect(() => {
     if (state.recipeData) {
@@ -179,46 +222,38 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
     }
   }, [state.language]);
 
-  useEffect(() => {
-    // console.log("DB Recipe: ", dbRecipe);
-    const fetchRecipeData = async () => {
-      const cacheKey = `recipe_en_${state.submittedUrl}`;
-      const cacheExpiry = 60 * 60 * 1000 * 24; // 24 hour (in milliseconds)
-      setLoading(true);
+  const fetchRecipeData = async () => {
+    const cacheKey = `recipe_en_${state.submittedUrl}`;
+    const cacheExpiry = 60 * 60 * 1000 * 24; // 24 hour (in milliseconds)
+    setLoading(true);
 
-      // Check if the cached data exists and is not expired
-      const cachedData = localStorage.getItem(cacheKey);
-      const cacheTimestamp = localStorage.getItem(`${cacheKey}_timestamp`);
+    // Check if the cached data exists and is not expired
+    const cachedData = localStorage.getItem(cacheKey);
+    const cacheTimestamp = localStorage.getItem(`${cacheKey}_timestamp`);
 
-      if (cachedData && cacheTimestamp) {
-        const currentTime = new Date().getTime();
-        const isCacheExpired =
-          currentTime - Number(cacheTimestamp) > cacheExpiry;
+    if (cachedData && cacheTimestamp) {
+      const currentTime = new Date().getTime();
+      const isCacheExpired = currentTime - Number(cacheTimestamp) > cacheExpiry;
 
-        if (!isCacheExpired) {
-          // Use the cached data
-          const parsedData = JSON.parse(cachedData);
-          console.log("Cached data: ", parsedData);
+      if (!isCacheExpired) {
+        // Use the cached data
+        const parsedData = JSON.parse(cachedData);
+        console.log("Cached data: ", parsedData);
 
-          setState({ ...state, recipeData: parsedData, language: 'en' });
-          console.log("Recipe Data: ", parsedData);
-          setLoading(false);
-
-        } else {
-          console.log("Cache data expired");
-          await fetchHtmlContent();
-        }
+        setState({ ...state, recipeData: parsedData, language: "en" });
+        console.log("Recipe Data: ", parsedData);
+        setLoading(false);
       } else {
-        console.log("Data not found in cache1");
+        console.log("Cache data expired");
         await fetchHtmlContent();
       }
-    };
-
-    if (state.submittedUrl) {
-      console.log("Test, submitted url: {}", state.submittedUrl);
-      fetchRecipeData();
+    } else {
+      console.log("Data not found in cache1");
+      await fetchHtmlContent();
     }
-  }, [state.submittedUrl]);
+  };
+
+
 
   const handleRecipeTranslate = async () => {
     const cacheKey = `recipe_${state.language}_${state.submittedUrl}`;
@@ -256,13 +291,14 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
         // console.log("Language is english");
         setCacheData(state.recipeData);
         setState({ ...state, displayRecipeData: state.recipeData });
-
       } else if (state.recipeData) {
         // console.log("Language is not english and recipeData is present");
-        const newRecipeData = await translateData(state.recipeData, state.language);
+        const newRecipeData = await translateData(
+          state.recipeData,
+          state.language
+        );
         setCacheData(newRecipeData);
         setState({ ...state, displayRecipeData: newRecipeData });
-
       }
 
       setLoading(false);
@@ -410,15 +446,15 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
     }
   };
 
-
-
   const { microdata } = require("@cucumber/microdata");
 
   const fetchHtmlContent = async () => {
     if (state.submittedUrl.trim() !== "") {
       try {
         setLoading(true);
-        const response = await fetch(`https://corsproxy.io/?${state.submittedUrl}`);
+        const response = await fetch(
+          `https://api.allorigins.win/raw?url=${state.submittedUrl}`
+        );
         if (response.ok) {
           const data = await response.text();
           const $ = cheerio.load(data);
@@ -451,18 +487,17 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
 
           // console.log("Cleaned data: ", cleanedRecipeData);
           if (cleanedRecipeData) {
-            setState(prevState => ({
+            setState((prevState) => ({
               ...prevState,
               recipeData: cleanedRecipeData,
-              language: 'en'
+              language: "en",
             }));
-            
+
             console.log("Recipe data updated");
             const cacheKey = `recipe_en_${state.submittedUrl}`;
 
             localStorage.setItem(cacheKey, JSON.stringify(cleanedRecipeData));
             localStorage.setItem(`${cacheKey}_timestamp`, new Date().getTime());
-
           } else {
             toast.error("No recipe found!");
           }
@@ -623,7 +658,13 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
 
   return (
     <div>
-      { (showLogin && !token) && <Login setToken={setToken} showLogin={showLogin} setShowLogin={setShowLogin} />}
+      {showLogin && !token && (
+        <Login
+          setToken={setToken}
+          showLogin={showLogin}
+          setShowLogin={setShowLogin}
+        />
+      )}
       <div className="loader">
         <HashLoader color="#36d646" loading={loading} />
       </div>
@@ -763,8 +804,11 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
           <div className="recipe-box">
             <div className="row align-items-center">
               <div className="col-sm-3 text-center">
-
-                <img src={recipeThumbnail} className="square-image" alt="Recipe" />
+                <img
+                  src={recipeThumbnail}
+                  className="square-image"
+                  alt="Recipe"
+                />
               </div>
               <div className="col-sm-9 text-center">
                 {/* Content for the 2nd column */}
@@ -794,15 +838,21 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
                             typeof state.displayRecipeData?.mainEntityOfPage ===
                             "string"
                               ? state.displayRecipeData?.mainEntityOfPage
-                              : state.displayRecipeData?.mainEntityOfPage?.["@id"]
+                              : state.displayRecipeData?.mainEntityOfPage?.[
+                                  "@id"
+                                ]
                           }
                         >
                           {" "}
                           {typeof state.displayRecipeData?.mainEntityOfPage ===
                           "string"
-                            ? getDomainName(state.displayRecipeData?.mainEntityOfPage)
+                            ? getDomainName(
+                                state.displayRecipeData?.mainEntityOfPage
+                              )
                             : getDomainName(
-                                state.displayRecipeData?.mainEntityOfPage?.["@id"]
+                                state.displayRecipeData?.mainEntityOfPage?.[
+                                  "@id"
+                                ]
                               )}
                         </a>
                       </small>
@@ -829,7 +879,9 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
                         </label>
                         <span>
                           {state.displayRecipeData?.prepTime &&
-                            convertISO8601Time(state.displayRecipeData?.prepTime)}
+                            convertISO8601Time(
+                              state.displayRecipeData?.prepTime
+                            )}
                         </span>
                       </div>
                     </div>
@@ -840,7 +892,9 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
                         </label>
                         <span>
                           {state.displayRecipeData?.cookTime &&
-                            convertISO8601Time(state.displayRecipeData?.cookTime)}
+                            convertISO8601Time(
+                              state.displayRecipeData?.cookTime
+                            )}
                         </span>
                       </div>
                     </div>
@@ -852,7 +906,9 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
                         </label>
                         <span>
                           {state.displayRecipeData?.totalTime &&
-                            convertISO8601Time(state.displayRecipeData?.totalTime)}
+                            convertISO8601Time(
+                              state.displayRecipeData?.totalTime
+                            )}
                         </span>
                       </div>
                     </div>

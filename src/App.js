@@ -1,12 +1,12 @@
 import "./App.css";
-import ReactGA4 from 'react-ga4';
+import ReactGA4 from "react-ga4";
 import RecipeSearch from "./RecipeSearch/RecipeSearch";
 import { AppStateProvider } from "./AppStateContext/AppStateContext";
 import About from "./About/About";
 
-import React, {useEffect} from "react";
+import React, { useEffect } from "react";
 import Navbar from "./Navbar/Navbar";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Router } from "react-router-dom";
 import RecipeCollection from "./RecipeCollection/RecipeCollection";
 import { ToastContainer } from "react-toastify";
 import Footer from "./Footer/Footer";
@@ -18,7 +18,7 @@ function App() {
   const { token, setToken, removeToken } = useToken();
 
   useEffect(() => {
-    if(!token){
+    if (!token) {
       ReactGA4.initialize(process.env.REACT_APP_measurementId);
     }
   }, [token]);
@@ -33,7 +33,6 @@ function App() {
         </div>
         <div className="main-component">
           <Routes>
-
             <Route path="/" element={<About />} />
             <Route
               path="/recipe-search"
@@ -45,7 +44,7 @@ function App() {
           </Routes>
         </div>
 
-        <Footer />
+        {/* <Footer /> */}
       </AppStateProvider>
     </>
   );
