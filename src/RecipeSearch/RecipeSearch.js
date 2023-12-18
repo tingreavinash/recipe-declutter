@@ -728,7 +728,7 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
                     </div>
                   )} */}
 
-                  <div className="col-auto option-button">
+                  {/* <div className="col-auto option-button">
                     <label
                       className="visually-hidden"
                       htmlFor="autoSizingSelect"
@@ -742,7 +742,6 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
                       onChange={handleLanguageChange}
                       disabled={loading}
                     >
-                      {/* <option selected>Select a language</option> */}
                       <option value="en" selected>
                         English
                       </option>
@@ -752,7 +751,7 @@ function RecipeSearch({ dbRecipe, token, setToken }) {
                       <option value="te">Telugu</option>
                       <option value="ta">Tamil</option>
                     </select>
-                  </div>
+                  </div> */}
                 </div>
 
                 {!dbRecipe && (
